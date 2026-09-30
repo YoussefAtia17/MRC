@@ -503,7 +503,7 @@
 
         window.onload = () => {
             if (db) {
-                const savedUser = localStorage.getItem('mrc_user');
+                const savedUser = sessionStorage.getItem('mrc_user');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
                     launchApp();
@@ -538,7 +538,7 @@
                 return;
             }
             currentUser = data;
-            localStorage.setItem('mrc_user', JSON.stringify(data));
+            sessionStorage.setItem('mrc_user', JSON.stringify(data));
             launchApp();
         }
 
@@ -561,12 +561,12 @@
             }
             alert("✅ تم إنشاء حسابك بنجاح!");
             currentUser = data;
-            localStorage.setItem('mrc_user', JSON.stringify(data));
+            sessionStorage.setItem('mrc_user', JSON.stringify(data));
             launchApp();
         }
 
         function logout() {
-            localStorage.removeItem('mrc_user');
+            sessionStorage.removeItem('mrc_user');
             currentUser = null;
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.remove('hidden');
