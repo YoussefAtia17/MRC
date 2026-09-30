@@ -677,6 +677,20 @@
         }
 
         // 6. حفظ الديل (أو إرسال طلب تخليص من الموظف للأونر)
+        // =========================================================================
+        // دالة حساب الرصيد الفعلي المتاح في الخزنة حالياً
+        // =========================================================================
+        function getCurrentTreasuryBalance() {
+            let totalIn = 0;
+            let totalOut = 0;
+            state.treasury.forEach(t => {
+                if (t.transaction_type === 'in') totalIn += Number(t.amount || 0);
+                else if (t.transaction_type === 'out') totalOut += Number(t.amount || 0);
+            });
+            return totalIn - totalOut;
+        }
+
+        // 6. حفظ الديل (مع التحقق من رصيد الخزنة عند تخليص الأونر للديل)
         async function saveDeal(e) {
             e.preventDefault();
             const editId = document.getElementById('editDealId').value;
@@ -691,11 +705,20 @@
 
             if (currentUser.role === 'owner') {
                 targetStatus = editId ? document.getElementById('dealStatus').value : (newPaid > 0 ? 'completed' : 'in_progress');
+                const diffPaid = newPaid - oldPaid;
+
+                // التحقق من رصيد الخزنة قبل تخليص الديل من الأونر
+                if (targetStatus === 'completed' && diffPaid > 0) {
+                    const currentBalance = getCurrentTreasuryBalance();
+                    if (currentBalance < diffPaid) {
+                        return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المطلوب للديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان تقدر تخلص الديل ويتسجل في الحسابات.`);
+                    }
+                }
+
                 if (targetStatus === 'completed' && newPaid > 0) {
                     ownerNote = `✅ تم الموافقة وتخليص الديل من الأونر بمبلغ ${newPaid.toLocaleString()} ج.م`;
                 }
             } else if (currentUser.role === 'employee') {
-                // الموظف بيعرض سعر لتخليص الديل -> يروح للأونر للموافقة
                 if (newPaid > 0 || editId) {
                     targetStatus = 'pending_owner';
                     ownerNote = `⏳ الموظف (${currentUser.full_name}) عرض تخليص الديل بمبلغ ${newPaid.toLocaleString()} ج.م - بانتظار قرار الأونر`;
@@ -729,7 +752,7 @@
                 savedDealId = insertedDeal.id;
             }
 
-            // الأونر فقط هو اللي بيخصم من الخزنة فوراً لما يخلص الديل
+            // خصم المبلغ من الخزنة وتسجيله بالتفصيل
             if (currentUser.role === 'owner' && targetStatus === 'completed') {
                 const diffPaid = newPaid - oldPaid;
                 if (diffPaid > 0) {
@@ -753,7 +776,7 @@
             await loadAllData();
         }
 
-        // 7. نافذة وتنفيذ قرار الأونر (موافقة / تعديل السعر / رفض)
+        // 7. نافذة وتنفيذ قرار الأونر (مع التحقق من رصيد الخزنة عند الموافقة)
         function openOwnerDecisionModal(dealId) {
             const d = state.deals.find(x => x.id === dealId);
             if (!d) return;
@@ -778,6 +801,14 @@
             const customNote = document.getElementById('ownerCustomNote').value.trim();
             const noteSuffix = customNote ? ` (${customNote})` : '';
 
+            // التحقق من رصيد الخزنة لو الأونر بيوافق على الديل
+            if (decisionType === 'approve' && finalPrice > 0) {
+                const currentBalance = getCurrentTreasuryBalance();
+                if (currentBalance < finalPrice) {
+                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي للموافقة على الديل!\n\nمبلغ الديل المطلوب: ${finalPrice.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان تقدر توافق ويتسجل الخصم في التقفيل.`);
+                }
+            }
+
             let newStatus = 'in_progress';
             let messageToBoth = '';
 
@@ -800,7 +831,6 @@
 
             if (error) return alert("❌ خطأ أثناء حفظ قرار الأونر: " + error.message);
 
-            // إذا وافق الأونر نهائياً، يتم خصم المبلغ المعتمد من الخزنة تلقائياً
             if (decisionType === 'approve' && finalPrice > 0) {
                 await db.from('treasury_transactions').insert([{
                     transaction_type: 'out',
@@ -843,7 +873,7 @@
             await loadAllData();
         }
 
-        // 9. حفظ السلف والبونص وحركات الخزنة
+        // 9. حفظ السلف والبونص (مع التحقق الإجباري من رصيد الخزنة وخصم السلفة والبونص منها)
         async function saveEmpFinancial(e) {
             e.preventDefault();
             const employee_id = document.getElementById('finEmpId').value;
@@ -851,6 +881,15 @@
             const amount = Number(document.getElementById('finAmount').value);
             const notes = document.getElementById('finNotes').value.trim();
             const approval_status = currentUser.role === 'owner' ? 'approved' : 'pending';
+
+            // لو الأونر هو اللي بيضيف سلفة أو بونص، لازم يتأكد إن الخزنة فيها رصيد كافي الأول
+            if (approval_status === 'approved') {
+                const currentBalance = getCurrentTreasuryBalance();
+                const typeLabel = transaction_type === 'loan' ? 'السلفة' : 'البونص';
+                if (currentBalance < amount) {
+                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان الكلام ده يتسجل في الخزنة والتقفيل.`);
+                }
+            }
 
             const { data: finData, error } = await db
                 .from('employee_financials')
@@ -860,14 +899,20 @@
 
             if (error) return alert("❌ خطأ: " + error.message);
 
-            if (transaction_type === 'loan' && approval_status === 'approved') {
+            // لو العملية معتمدة (سواء سلفة أو بونص)، تتخصم فوراً من الخزنة وتتسجل بالتفصيل والوقت
+            if (approval_status === 'approved') {
                 const emp = state.employees.find(x => x.id === employee_id);
+                const actionTitle = transaction_type === 'loan' ? 'صرف سلفة للموظف' : 'صرف بونص (مكافأة) للموظف';
+                const noteText = notes ? ` - البيان: ${notes}` : '';
+
                 await db.from('treasury_transactions').insert([{
                     transaction_type: 'out',
-                    amount,
-                    description: `صرف سلفة للموظف: ${emp ? emp.full_name : ''} (${notes})`,
+                    amount: amount,
+                    description: `${actionTitle}: ${emp ? emp.full_name : ''}${noteText}`,
                     related_emp_financial_id: finData.id
                 }]);
+            } else {
+                alert("✅ تم إرسال طلب السلفة للأونر، وسيتم صرفها وخصمها من الخزنة فور موافقة الأونر.");
             }
 
             e.target.reset();
@@ -875,24 +920,51 @@
             await loadAllData();
         }
 
+        // موافقة الأونر على طلب سلفة مقدم من موظف (لا يوافق إلا لو الخزنة فيها فلوس)
         async function approveLoan(id, empId, amount) {
-            await db.from('employee_financials').update({ approval_status: 'approved' }).eq('id', id);
+            const loanAmount = Number(amount);
+            const currentBalance = getCurrentTreasuryBalance();
+
+            if (currentBalance < loanAmount) {
+                return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي للموافقة على السلفة!\n\nمبلغ السلفة المطلوب: ${loanAmount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان تقدر توافق على السلفة وتسمع في التقفيل.`);
+            }
+
+            const finRecord = state.empFinancials.find(f => f.id === id);
+            const noteText = (finRecord && finRecord.notes) ? ` - البيان: ${finRecord.notes}` : '';
+
+            const { error } = await db.from('employee_financials').update({ approval_status: 'approved' }).eq('id', id);
+            if (error) return alert("❌ خطأ أثناء الموافقة: " + error.message);
+
             const emp = state.employees.find(x => x.id === empId);
             await db.from('treasury_transactions').insert([{
                 transaction_type: 'out',
-                amount: Number(amount),
-                description: `موافقة وصرف سلفة للموظف: ${emp ? emp.full_name : ''}`,
+                amount: loanAmount,
+                description: `موافقة وصرف سلفة للموظف: ${emp ? emp.full_name : ''}${noteText}`,
                 related_emp_financial_id: id
             }]);
+
+            alert(`✅ تمت الموافقة على السلفة وخصم ${loanAmount.toLocaleString()} ج.م من الخزنة بنجاح!`);
             await loadAllData();
         }
 
+        // 10. إضافة حركة خزنة يدوية (مع منع الصرف لو الخزنة مفيهاش رصيد كافي)
         async function saveTreasuryTransaction(e) {
             e.preventDefault();
+            const type = document.getElementById('trType').value;
+            const amount = Number(document.getElementById('trAmount').value);
+            const desc = document.getElementById('trDesc').value.trim();
+
+            if (type === 'out') {
+                const currentBalance = getCurrentTreasuryBalance();
+                if (currentBalance < amount) {
+                    return alert(`⚠️ لا يمكن صرف هذا المبلغ لأن رصيد الخزنة غير كافي!\n\nالمبلغ المراد صرفه: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nقم بإيداع فلوس في الخزنة أولاً.`);
+                }
+            }
+
             const { error } = await db.from('treasury_transactions').insert([{
-                transaction_type: document.getElementById('trType').value,
-                amount: Number(document.getElementById('trAmount').value),
-                description: document.getElementById('trDesc').value.trim()
+                transaction_type: type,
+                amount: amount,
+                description: desc
             }]);
             if (error) return alert("❌ خطأ: " + error.message);
             e.target.reset();
