@@ -23,18 +23,14 @@
     <div id="toastContainer" class="fixed top-16 left-4 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
 
     <!-- ================================================================= -->
-    <!-- شاشة تسجيل الدخول وإنشاء حساب (Sign In / Sign Up)                 -->
+    <!-- شاشة تسجيل الدخول للموظفين والأونر فقط (Sign In Only)              -->
     <!-- ================================================================= -->
     <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-slate-900">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5">
             <div class="text-center">
                 <div class="inline-block bg-blue-600 text-white font-extrabold px-4 py-1.5 rounded-xl text-2xl mb-2">MRC</div>
-                <h1 class="font-bold text-xl text-slate-900">بوابة الدخول للنظام</h1>
-            </div>
-
-            <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl text-sm font-bold">
-                <button onclick="toggleAuthMode('signin')" id="btnModeSignin" class="py-2 rounded-lg bg-white shadow text-blue-600">تسجيل دخول (Sign In)</button>
-                <button onclick="toggleAuthMode('signup')" id="btnModeSignup" class="py-2 rounded-lg text-slate-600">حساب عميل جديد (Sign Up)</button>
+                <h1 class="font-bold text-xl text-slate-900">تسجيل دخول الإدارة والموظفين</h1>
+                <p class="text-xs text-slate-500 mt-1">نظام داخلي لإدارة الصفقات والموظفين والخزنة</p>
             </div>
 
             <form id="signinForm" onsubmit="handleSignIn(event)" class="space-y-4 text-sm">
@@ -48,28 +44,6 @@
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition">
                     دخول للنظام
-                </button>
-            </form>
-
-            <form id="signupForm" onsubmit="handleSignUp(event)" class="hidden space-y-3 text-sm">
-                <div>
-                    <label class="block font-bold mb-1">الاسم بالكامل *</label>
-                    <input type="text" id="regName" required class="w-full border border-slate-300 rounded-xl p-2.5">
-                </div>
-                <div>
-                    <label class="block font-bold mb-1">رقم التليفون (واتساب) *</label>
-                    <input type="text" id="regPhone" required placeholder="010xxxxxxxx" class="w-full border border-slate-300 rounded-xl p-2.5">
-                </div>
-                <div>
-                    <label class="block font-bold mb-1">البريد الإلكتروني *</label>
-                    <input type="email" id="regEmail" required class="w-full border border-slate-300 rounded-xl p-2.5">
-                </div>
-                <div>
-                    <label class="block font-bold mb-1">كلمة المرور *</label>
-                    <input type="password" id="regPassword" required minlength="4" class="w-full border border-slate-300 rounded-xl p-2.5">
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition">
-                    إنشاء حساب عميل جديد
                 </button>
             </form>
         </div>
@@ -90,55 +64,36 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 relative">
-                    <!-- زرار جرس الإشعارات -->
-                    <button onclick="toggleNotifDropdown()" class="relative bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg border border-slate-700 text-xs flex items-center gap-1">
-                        <span>🔔 الإشعارات</span>
-                        <span id="notifCountBadge" class="hidden bg-rose-600 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
-                    </button>
-
-                    <!-- قائمة الإشعارات المنسدلة -->
-                    <div id="notifDropdown" class="hidden absolute top-12 left-0 w-80 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
-                        <div class="bg-slate-100 p-3 font-bold text-xs flex justify-between items-center border-b">
-                            <span>🔔 سجل إشعارات وتحديثات الصفقات</span>
-                            <button onclick="toggleNotifDropdown()" class="text-slate-500 hover:text-slate-800 font-bold">✕</button>
-                        </div>
-                        <div id="notifDropdownList" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
-                    </div>
-
-                    <button onclick="loadAllData(true)" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700">🔄 تحديث</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="loadAllData(true)" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700">🔄 تحديث البيانات</button>
                     <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-xs font-bold px-3 py-2 rounded-lg">تسجيل خروج</button>
                 </div>
             </div>
 
-            <!-- التبويبات حسب الصلاحية -->
+            <!-- التبويبات -->
             <div class="bg-slate-800 border-t border-slate-700">
                 <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-2 py-2">
                     <button onclick="switchPage('deals')" id="tab-deals" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        📋 الصفقات والعملاء (Deals)
+                        📋 1. الصفقات والعملاء (Deals)
                     </button>
-                    <button onclick="switchPage('employees')" id="tab-employees" class="tab-btn staff-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        👥 الموظفين والمرتبات والسلف
+                    <button onclick="switchPage('employees')" id="tab-employees" class="tab-btn text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
+                        👥 2. الموظفين والمرتبات والسلف
                     </button>
-                    <button onclick="switchPage('treasury')" id="tab-treasury" class="tab-btn owner-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        🏦 الخزنة والتقفيل اليومي/الشهري
+                    <button onclick="requestTreasuryAccess()" id="tab-treasury" class="tab-btn text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap flex items-center gap-1">
+                        <span>🔒 3. الخزنة والتقفيل اليومي/الشهري</span>
                     </button>
                     <button onclick="switchPage('users')" id="tab-users" class="tab-btn owner-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        🔐 حسابات المستخدمين (Users)
+                        🔐 حسابات الموظفين والنظام
                     </button>
                 </div>
             </div>
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-6">
-            <!-- PAGE 1: الصفقات (Deals) -->
+            <!-- ================================================================= -->
+            <!-- PAGE 1: الصفقات والعملاء (Deals)                                  -->
+            <!-- ================================================================= -->
             <section id="page-deals" class="space-y-6">
-                <!-- شريط تنبيهات القرارات والتسعير الفوري -->
-                <div id="dealsNotificationsBox" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-                    <div class="font-bold text-sm text-blue-900">🔔 آخر الإشعارات والقرارات على صفقاتك:</div>
-                    <div id="dealsNotificationsList" class="space-y-1.5 text-xs"></div>
-                </div>
-
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between gap-4 items-center">
                     <div class="relative w-full md:w-2/3">
                         <input type="text" id="dealSearchInput" oninput="handleSearchDeals(this.value)"
@@ -146,7 +101,7 @@
                             class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <button onclick="openNewDealModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow">
-                        + إضافة عرض / ديل جديد
+                        + تسجيل عميل / ديل جديد (من الواتساب)
                     </button>
                 </div>
 
@@ -155,14 +110,14 @@
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700 border-b">
                                 <tr>
-                                    <th class="p-3.5">العميل والتليفون</th>
-                                    <th class="p-3.5">المكان</th>
+                                    <th class="p-3.5">اسم العميل والتليفون</th>
+                                    <th class="p-3.5">منين (المكان)</th>
                                     <th class="p-3.5">تفاصيل الـ Deal</th>
-                                    <th class="p-3.5">الأسعار (المعروض / المطلوب)</th>
-                                    <th class="p-3.5">معاد المقابلة/التواصل</th>
-                                    <th class="p-3.5">الصورة</th>
-                                    <th class="p-3.5">الحالة وآخر إشعار</th>
-                                    <th class="p-3.5">إجراءات التفاوض والتحكم</th>
+                                    <th class="p-3.5">أنا دفعتله كام / طالب كام</th>
+                                    <th class="p-3.5">المعاد المتفق عليه (Reminder)</th>
+                                    <th class="p-3.5">صورة المنتج</th>
+                                    <th class="p-3.5">الحالة والموظف</th>
+                                    <th class="p-3.5">إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="dealsTableBody" class="divide-y divide-slate-100"></tbody>
@@ -171,18 +126,20 @@
                 </div>
             </section>
 
-            <!-- PAGE 2: الموظفين والمرتبات والسلف -->
+            <!-- ================================================================= -->
+            <!-- PAGE 2: الموظفين والمرتبات والسلف                                 -->
+            <!-- ================================================================= -->
             <section id="page-employees" class="hidden space-y-6">
                 <div class="flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
                     <div>
                         <h2 class="font-bold text-lg">إدارة الموظفين، السلف، والمرتبات</h2>
-                        <p class="text-xs text-slate-500">الأونر يقدر يكريت أكونت للموظف من هنا، ويتابع السلف والبونص والمرتب الصافي</p>
+                        <p class="text-xs text-slate-500">أي سلفة يسجلها الموظف تُعتمد فوراً وتُخصم تلقائياً من رصيد الخزنة ومن مرتبه الشهري</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="openModal('empFinancialModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm">
-                            💸 طلب سلفة / إضافة بونص
+                        <button onclick="openEmpFinancialModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
+                            💸 سحب سلفة فورية / إضافة بونص
                         </button>
-                        <button onclick="openModal('addEmployeeModal')" class="owner-only bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm">
+                        <button onclick="openModal('addEmployeeModal')" class="owner-only bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
                             + إنشاء حساب موظف جديد (للأونر)
                         </button>
                     </div>
@@ -196,13 +153,13 @@
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700">
                                 <tr>
-                                    <th class="p-3">الموظف</th>
-                                    <th class="p-3">النوع</th>
+                                    <th class="p-3">اسم الموظف</th>
+                                    <th class="p-3">نوع العملية</th>
                                     <th class="p-3">المبلغ</th>
-                                    <th class="p-3">البيان</th>
-                                    <th class="p-3">التاريخ</th>
+                                    <th class="p-3">البيان / الملاحظات</th>
+                                    <th class="p-3">التاريخ والوقت</th>
                                     <th class="p-3">الحالة</th>
-                                    <th class="p-3 owner-only">تحكم الأونر</th>
+                                    <th class="p-3 owner-only">حذف (للأونر)</th>
                                 </tr>
                             </thead>
                             <tbody id="empFinancialsTableBody" class="divide-y divide-slate-100"></tbody>
@@ -211,42 +168,63 @@
                 </div>
             </section>
 
-            <!-- PAGE 3: الخزنة والتقفيل اليومي والشهري -->
+            <!-- ================================================================= -->
+            <!-- PAGE 3: الخزنة والتقفيل اليومي والشهري (محمية بباسورد)             -->
+            <!-- ================================================================= -->
             <section id="page-treasury" class="hidden space-y-6">
+                <!-- شريط تحكم وأمان الخزنة -->
+                <div class="bg-slate-900 text-white p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🔓</span>
+                        <div>
+                            <h2 class="font-bold text-sm md:text-base">الخزنة مفتوحة الآن</h2>
+                            <p class="text-xs text-slate-400">يتم تسجيل كافة الإيداعات، المصروفات، السلف، والصفقات بالتفصيل والتاريخ</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openModal('changeTreasuryPassModal')" class="owner-only bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg">
+                            🔑 تغيير باسورد الخزنة
+                        </button>
+                        <button onclick="lockTreasury()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3 py-2 rounded-lg">
+                            🔒 قفل الخزنة الآن
+                        </button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white p-5 rounded-xl shadow-sm border-r-4 border-blue-600">
-                        <h3 class="text-xs font-bold text-slate-500 mb-2">📅 التقفيل اليومي (النهاردة)</h3>
+                        <h3 class="text-xs font-bold text-slate-500 mb-2">📅 التقفيل اليومي (حسابات النهاردة)</h3>
                         <div class="flex justify-between text-sm mb-1"><span>دخل اليوم:</span><span id="dailyIn" class="font-bold text-emerald-600">0 ج.م</span></div>
                         <div class="flex justify-between text-sm mb-2"><span>اتصرف اليوم:</span><span id="dailyOut" class="font-bold text-rose-600">0 ج.م</span></div>
                         <div class="border-t pt-2 flex justify-between font-extrabold"><span>صافي اليوم:</span><span id="dailyNet" class="text-blue-600">0 ج.م</span></div>
                     </div>
 
                     <div class="bg-white p-5 rounded-xl shadow-sm border-r-4 border-emerald-600">
-                        <h3 class="text-xs font-bold text-slate-500 mb-2">🗓️️ التقفيل الشهري (على مدار الشهر)</h3>
+                        <h3 class="text-xs font-bold text-slate-500 mb-2">🗓️ التقفيل الشهري (على مدار الشهر)</h3>
                         <div class="flex justify-between text-sm mb-1"><span>إجمالي دخل الشهر:</span><span id="monthlyIn" class="font-bold text-emerald-600">0 ج.م</span></div>
                         <div class="flex justify-between text-sm mb-2"><span>إجمالي مصروفات الشهر:</span><span id="monthlyOut" class="font-bold text-rose-600">0 ج.م</span></div>
-                        <div class="border-t pt-2 flex justify-between font-extrabold"><span>صافي الخزنة بالشهر:</span><span id="monthlyNet" class="text-emerald-700">0 ج.م</span></div>
+                        <div class="border-t pt-2 flex justify-between font-extrabold"><span>الرصيد الفعلي بالخزنة:</span><span id="monthlyNet" class="text-emerald-700">0 ج.م</span></div>
                     </div>
 
-                    <div class="bg-slate-900 text-white p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border flex flex-col justify-between">
                         <div>
-                            <h3 class="font-bold text-base">إدارة الخزنة</h3>
-                            <p class="text-xs text-slate-400 mt-1">سجل أي فلوس دخلت أو اتصرفت بالتفصيل.</p>
+                            <h3 class="font-bold text-base text-slate-900">إيداع أو صرف من الخزنة</h3>
+                            <p class="text-xs text-slate-500 mt-1">أضف فلوس للخزنة أو سجل أي مصروفات بتفاصيلها لتظهر في التقفيل.</p>
                         </div>
-                        <button onclick="openModal('treasuryModal')" class="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg text-sm">
-                            + إضافة حركة خزنة
+                        <button onclick="openModal('treasuryModal')" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow">
+                            + إضافة حركة خزنة (إيداع / صرف)
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="p-4 border-b flex justify-between items-center bg-slate-50">
-                        <span class="font-bold text-sm">📖 سجل تفصيل حركات الخزنة</span>
-                        <select id="treasuryFilter" onchange="renderTreasury()" class="border rounded-lg px-3 py-1.5 text-xs bg-white">
+                    <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50">
+                        <span class="font-bold text-sm">📖 دفتر تفصيل حركات الخزنة (التقفيل اليومي والشهري)</span>
+                        <select id="treasuryFilter" onchange="renderTreasury()" class="border rounded-lg px-3 py-1.5 text-xs bg-white font-semibold">
                             <option value="all">كل الحركات (التقفيل الشهري)</option>
                             <option value="today">حركات النهاردة فقط (التقفيل اليومي)</option>
-                            <option value="in">اللي دخل الخزنة فقط</option>
-                            <option value="out">اللي اتصرف فقط</option>
+                            <option value="in">اللي دخل الخزنة فقط (إيداع)</option>
+                            <option value="out">اللي اتصرف فقط (سلف / بونص / صفقات / مصاريف)</option>
                         </select>
                     </div>
                     <div class="overflow-x-auto">
@@ -255,9 +233,9 @@
                                 <tr>
                                     <th class="p-3.5">النوع</th>
                                     <th class="p-3.5">المبلغ</th>
-                                    <th class="p-3.5">التفصيل</th>
+                                    <th class="p-3.5">التفصيل الكامل (البيان)</th>
                                     <th class="p-3.5">التاريخ والوقت</th>
-                                    <th class="p-3.5">حذف</th>
+                                    <th class="p-3.5 owner-only">حذف</th>
                                 </tr>
                             </thead>
                             <tbody id="treasuryTableBody" class="divide-y divide-slate-100"></tbody>
@@ -266,10 +244,12 @@
                 </div>
             </section>
 
-            <!-- PAGE 4: جدول كل حسابات المستخدمين -->
+            <!-- ================================================================= -->
+            <!-- PAGE 4: جدول حسابات الموظفين والنظام (للأونر فقط)                  -->
+            <!-- ================================================================= -->
             <section id="page-users" class="hidden space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="p-4 border-b bg-slate-50 font-bold text-sm">🔐 جميع الحسابات المسجلة في النظام (أونر / موظفين / عملاء)</div>
+                    <div class="p-4 border-b bg-slate-50 font-bold text-sm">🔐 حسابات الدخول المسجلة في النظام</div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700">
@@ -294,6 +274,39 @@
     <!-- النوافذ المنبثقة (Modals)                                          -->
     <!-- ================================================================= -->
 
+    <!-- نافذة إدخال باسورد الخزنة لفتحها -->
+    <div id="treasuryPasswordModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-2xl">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl">🔒</div>
+            <h3 class="font-bold text-lg text-slate-900">الخزنة محمية بكلمة مرور</h3>
+            <p class="text-xs text-slate-500">أدخل باسورد الخزنة الخاص بالأونر للدخول إلى الحسابات والتقفيل</p>
+            <form onsubmit="verifyTreasuryPassword(event)" class="space-y-3">
+                <input type="password" id="treasuryPassInput" required placeholder="أدخل باسورد الخزنة..." class="w-full border-2 border-slate-300 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-600">
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('treasuryPasswordModal')" class="w-1/2 py-2.5 rounded-xl bg-slate-200 font-bold text-xs">إلغاء</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow">فتح الخزنة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة تغيير باسورد الخزنة (للأونر فقط) -->
+    <div id="changeTreasuryPassModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 class="font-bold text-lg border-b pb-2">🔑 تغيير باسورد الخزنة</h3>
+            <form onsubmit="saveNewTreasuryPassword(event)" class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-bold mb-1">باسورد الخزنة الجديد *</label>
+                    <input type="text" id="newTreasuryPass" required minlength="3" placeholder="اكتب الباسورد الجديد..." class="w-full border rounded-xl p-2.5 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeModal('changeTreasuryPassModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-amber-600 text-white font-bold">حفظ الباسورد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- نافذة عرض الصورة المكبرة داخل نفس الصفحة (Image Lightbox Modal) -->
     <div id="imageViewerModal" onclick="closeModal('imageViewerModal')" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-50 p-4 cursor-zoom-out">
         <div class="relative max-w-3xl w-full bg-slate-900 p-3 rounded-2xl shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
@@ -305,39 +318,10 @@
         </div>
     </div>
 
-    <!-- نافذة إعادة التسعير الخاصة بالعميل (Client Counter-Offer Modal) -->
-    <div id="clientCounterModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2 text-slate-900">🔄 إعادة تسعير / اقتراح سعر جديد</h3>
-            <input type="hidden" id="counterDealId">
-
-            <div class="bg-slate-50 p-3 rounded-xl border text-sm space-y-1">
-                <div>تفاصيل المنتج: <b id="counterDealDetails"></b></div>
-                <div class="text-emerald-700">السعر المعروض عليك حالياً: <b id="counterCurrentOffer"></b> ج.م</div>
-                <div class="text-rose-700">السعر السابق المطلوب: <b id="counterOldReq"></b> ج.م</div>
-            </div>
-
-            <form onsubmit="submitClientCounterOffer(event)" class="space-y-3 text-sm">
-                <div>
-                    <label class="block font-bold mb-1 text-blue-800">🏷️ اكتب السعر الجديد اللي يناسبك لتخليص الديل (ج.م) *</label>
-                    <input type="number" id="clientNewPrice" required min="1" class="w-full border-2 border-blue-500 rounded-xl p-2.5 font-extrabold text-base">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">رسالة للموظف أو الأونر (اختياري):</label>
-                    <input type="text" id="clientCounterNote" placeholder="مثال: النهائي بتاعي 950 عشان الحالة زيرو..." class="w-full border rounded-xl p-2.5">
-                </div>
-                <div class="flex justify-end gap-2 pt-3 border-t">
-                    <button type="button" onclick="closeModal('clientCounterModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
-                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold">إرسال السعر الجديد</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 1. نافذة إضافة / تخليص ديل (لليوزر والموظف والأونر) -->
+    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (للموظف والأونر) -->
     <div id="dealModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل ديل / عرض منتج</h3>
+            <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل بيانات عميل وديل جديد</h3>
             <form id="dealForm" onsubmit="saveDeal(event)" class="space-y-3 text-sm">
                 <input type="hidden" id="editDealId">
                 <input type="hidden" id="oldAmountPaid" value="0">
@@ -348,35 +332,35 @@
                         <input type="text" id="clientName" required class="w-full border rounded-lg p-2">
                     </div>
                     <div>
-                        <label class="block font-semibold mb-1">رقم التليفون (واتساب) *</label>
-                        <input type="text" id="clientPhone" required class="w-full border rounded-lg p-2">
+                        <label class="block font-semibold mb-1">رقم تليفون العميل (واتساب) *</label>
+                        <input type="text" id="clientPhone" required placeholder="010xxxxxxxx" class="w-full border rounded-lg p-2">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-semibold mb-1">المكان (منين)</label>
+                        <label class="block font-semibold mb-1">العميل منين (المكان)</label>
                         <input type="text" id="clientLocation" class="w-full border rounded-lg p-2">
                     </div>
-                    <div class="staff-only">
-                        <label class="block font-semibold mb-1">الموظف المسؤول</label>
+                    <div>
+                        <label class="block font-semibold mb-1">الموظف المسؤول عن الديل</label>
                         <select id="dealEmployee" class="w-full border rounded-lg p-2 bg-white"></select>
                     </div>
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">تفاصيل الـ Deal / المنتج المعروض *</label>
+                    <label class="block font-semibold mb-1">تفاصيل الـ Deal اللي حصل ما بينا *</label>
                     <textarea id="dealDetails" required rows="2" class="w-full border rounded-lg p-2"></textarea>
                 </div>
 
                 <!-- قسم الأسعار -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border">
-                    <div class="staff-only">
-                        <label id="amountPaidLabel" class="block font-bold mb-1 text-emerald-700">💵 السعر المعروض للتخليص (ج.م)</label>
-                        <input type="number" id="amountPaid" value="0" class="w-full border border-emerald-400 rounded-lg p-2 font-bold bg-white">
-                        <span class="text-[11px] text-slate-500">يصل العرض للعميل وللأونر للموافقة أو التفاوض</span>
+                    <div>
+                        <label class="block font-bold mb-1 text-emerald-700">💵 أنا دفعتله كام (ج.م)</label>
+                        <input type="number" id="amountPaid" value="0" min="0" class="w-full border border-emerald-400 rounded-lg p-2 font-bold bg-white">
+                        <span class="text-[11px] text-slate-500">يُخصم تلقائياً من الخزنة عند إتمام الشراء</span>
                     </div>
                     <div>
                         <label class="block font-bold mb-1 text-rose-700">🏷️ العميل طالب كام (ج.م)</label>
-                        <input type="number" id="amountRequested" value="0" class="w-full border rounded-lg p-2 font-bold bg-white">
+                        <input type="number" id="amountRequested" value="0" min="0" class="w-full border rounded-lg p-2 font-bold bg-white">
                     </div>
                 </div>
 
@@ -385,14 +369,12 @@
                         <label class="block font-semibold mb-1">المعاد المتفق عليه للتواصل أو المقابلة</label>
                         <input type="datetime-local" id="meetingTime" class="w-full border rounded-lg p-2">
                     </div>
-                    <div class="owner-only">
-                        <label class="block font-bold mb-1 text-blue-700">حالة الديل (للأونر)</label>
+                    <div>
+                        <label class="block font-bold mb-1 text-blue-700">حالة الديل</label>
                         <select id="dealStatus" class="w-full border border-blue-400 rounded-lg p-2 bg-white font-bold">
-                            <option value="in_progress">⏳ قيد المتابعة</option>
-                            <option value="pending_owner">💬 عرض سعر مرسل للعميل/الأونر</option>
+                            <option value="in_progress">⏳ لسه مخلصش (قيد التواصل والمتابعة)</option>
                             <option value="completed">✅ تم الشراء وتخليص الديل</option>
-                            <option value="price_modified">🔄 تم تعديل السعر</option>
-                            <option value="cancelled">❌ مرفوض / ملغي</option>
+                            <option value="cancelled">❌ ملغي / لم يتم الاتفاق</option>
                         </select>
                     </div>
                 </div>
@@ -405,57 +387,16 @@
 
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('dealModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
-                    <button type="submit" id="saveDealBtn" class="px-5 py-2 rounded-lg bg-blue-600 text-white font-bold">حفظ البيانات</button>
+                    <button type="submit" id="saveDealBtn" class="px-5 py-2 rounded-lg bg-blue-600 text-white font-bold">حفظ الديل</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 2. نافذة قرار الأونر / التفاوض على الديل -->
-    <div id="ownerDecisionModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2 text-slate-900">⚖️ قرار التفاوض وتخليص الديل</h3>
-            <input type="hidden" id="decisionDealId">
-
-            <div class="bg-slate-50 p-3 rounded-xl border text-sm space-y-1">
-                <div>العميل: <b id="decClientName"></b></div>
-                <div>تفاصيل الديل: <span id="decDealDetails" class="text-slate-600"></span></div>
-                <div class="text-rose-700">المبلغ اللي طالبه العميل حالياً: <b id="decRequested"></b> ج.م</div>
-                <div class="text-emerald-700">السعر المعروض من الموظف/الإدارة: <b id="decProposed"></b> ج.م</div>
-            </div>
-
-            <div class="space-y-3 text-sm">
-                <div>
-                    <label class="block font-bold mb-1 text-blue-800">💵 السعر المعتمد للتخليص أو لإرساله للعميل:</label>
-                    <input type="number" id="ownerFinalPrice" class="w-full border-2 border-blue-500 rounded-xl p-2.5 font-extrabold text-base">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">رسالة أو ملاحظة للعميل والموظف (اختياري):</label>
-                    <input type="text" id="ownerCustomNote" placeholder="مثال: تم اعتماد السعر النهائي..." class="w-full border rounded-xl p-2.5">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-2 pt-2">
-                <button onclick="executeOwnerDecision('approve')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow text-sm">
-                    ✅ موافقة نهائية وتخليص الديل فوراً (يُخصم من الخزنة ويُشعر العميل)
-                </button>
-                <button onclick="executeOwnerDecision('modify')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow text-sm">
-                    🔄 إرسال هذا السعر كعرض جديد للعميل والموظف للموافقة عليه
-                </button>
-                <button onclick="executeOwnerDecision('reject')" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl shadow text-sm">
-                    ❌ رفض الديل وإبلاغ الموظف والعميل
-                </button>
-            </div>
-            <div class="text-left border-t pt-2">
-                <button onclick="closeModal('ownerDecisionModal')" class="px-4 py-1.5 rounded-lg bg-slate-200 text-xs font-bold">إغلاق</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. نافذة إنشاء أكونت موظف جديد بواسطة الأونر -->
+    <!-- 2. نافذة إنشاء أكونت موظف جديد بواسطة الأونر -->
     <div id="addEmployeeModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب موظف جديد (بصلاحيات موظف)</h3>
+            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب موظف جديد</h3>
             <form onsubmit="ownerCreateEmployee(event)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-semibold mb-1">اسم الموظف بالكامل *</label>
@@ -485,20 +426,20 @@
         </div>
     </div>
 
-    <!-- 4. نافذة السلف والبونص -->
+    <!-- 3. نافذة السلف الفورية والبونص -->
     <div id="empFinancialModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2">تسجيل سلفة أو بونص</h3>
+            <h3 class="font-bold text-lg border-b pb-2">تسجيل سلفة فورية أو بونص</h3>
             <form onsubmit="saveEmpFinancial(event)" class="space-y-3 text-sm">
                 <div>
-                    <label class="block font-semibold mb-1">الموظف *</label>
+                    <label class="block font-semibold mb-1">اسم الموظف *</label>
                     <select id="finEmpId" required class="w-full border rounded-lg p-2 bg-white"></select>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">نوع العملية *</label>
                     <select id="finType" class="w-full border rounded-lg p-2 bg-white">
-                        <option value="loan">🔻 طلب سلفة (استلاف)</option>
-                        <option value="bonus" class="owner-only">🎁 إضافة بونص (للأونر فقط)</option>
+                        <option value="loan">🔻 سحب سلفة (تُخصم فوراً من الخزنة ومن المرتب)</option>
+                        <option value="bonus" class="owner-only">🎁 إضافة بونص / مكافأة (للأونر فقط)</option>
                     </select>
                 </div>
                 <div>
@@ -506,18 +447,18 @@
                     <input type="number" id="finAmount" required min="1" class="w-full border rounded-lg p-2">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">البيان / السبب</label>
-                    <input type="text" id="finNotes" class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">البيان / الملاحظات</label>
+                    <input type="text" id="finNotes" placeholder="مثال: سلفة شخصية..." class="w-full border rounded-lg p-2">
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('empFinancialModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
-                    <button type="submit" class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-bold">حفظ</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-bold">تأكيد وخصم من الخزنة</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 5. نافذة الخزنة -->
+    <!-- 4. نافذة الخزنة -->
     <div id="treasuryModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">تسجيل حركة في الخزنة</h3>
@@ -534,8 +475,8 @@
                     <input type="number" id="trAmount" required min="1" class="w-full border rounded-lg p-2">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">التفصيل الكامل *</label>
-                    <textarea id="trDesc" required rows="2" class="w-full border rounded-lg p-2"></textarea>
+                    <label class="block font-semibold mb-1">التفصيل الكامل (البيان) *</label>
+                    <textarea id="trDesc" required rows="2" placeholder="اكتب تفصيل الحركة ليظهر في التقفيل اليومي والشهري..." class="w-full border rounded-lg p-2"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('treasuryModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
@@ -557,8 +498,8 @@
 
         let currentUser = null;
         let compressedImageDataUrl = "";
+        let isTreasuryUnlocked = false; // حالة قفل الخزنة بالباسورد
         let state = { employees: [], deals: [], empFinancials: [], treasury: [], users: [] };
-        let knownNotesMap = {}; // لتتبع الإشعارات الجديدة وإظهار Toast
 
         window.onload = () => {
             if (db) {
@@ -568,13 +509,9 @@
                     launchApp();
                 }
             }
-            // تحديث تلقائي كل 6 ثواني لظهور الإشعارات وتحديثات الأسعار لايف عند العميل والموظف والأونر
-            setInterval(() => {
-                if (currentUser) loadAllData(false);
-            }, 6000);
         };
 
-        // دالة إظهار إشعار منبثق (Toast Notification) داخل الموقع
+        // دالة إظهار إشعار منبثق (Toast Notification)
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const colors = {
@@ -589,14 +526,10 @@
                 <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white font-extrabold">✕</button>
             `;
             container.appendChild(toast);
-            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 7000);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 6000);
         }
 
-        function toggleNotifDropdown() {
-            document.getElementById('notifDropdown').classList.toggle('hidden');
-        }
-
-        // دالة فتح الصورة في نفس الصفحة (Image Lightbox)
+        // فتح الصورة مكبرة في نفس الصفحة
         function viewDealImage(dealId) {
             const d = state.deals.find(x => x.id === dealId);
             if (!d || !d.item_image_url) return;
@@ -605,18 +538,15 @@
             openModal('imageViewerModal');
         }
 
-        function toggleAuthMode(mode) {
-            const isSignin = mode === 'signin';
-            document.getElementById('signinForm').classList.toggle('hidden', !isSignin);
-            document.getElementById('signupForm').classList.toggle('hidden', isSignin);
-            document.getElementById('btnModeSignin').className = isSignin ? "py-2 rounded-lg bg-white shadow text-blue-600" : "py-2 rounded-lg text-slate-600";
-            document.getElementById('btnModeSignup').className = !isSignin ? "py-2 rounded-lg bg-white shadow text-emerald-600" : "py-2 rounded-lg text-slate-600";
-        }
-
+        // 1. تسجيل الدخول (للموظفين والأونر فقط)
         async function handleSignIn(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
+
+            if (email === 'treasury@mrc.lock') {
+                return alert("❌ هذا حساب نظام داخلي لحفظ باسورد الخزنة فقط.");
+            }
 
             const { data, error } = await db
                 .from('app_users')
@@ -629,27 +559,13 @@
                 alert("❌ البريد الإلكتروني أو كلمة المرور غير صحيحة!");
                 return;
             }
-            currentUser = data;
-            sessionStorage.setItem('mrc_user', JSON.stringify(data));
-            launchApp();
-        }
-
-        async function handleSignUp(e) {
-            e.preventDefault();
-            const newUser = {
-                full_name: document.getElementById('regName').value.trim(),
-                phone: document.getElementById('regPhone').value.trim(),
-                email: document.getElementById('regEmail').value.trim(),
-                password_hash: document.getElementById('regPassword').value.trim(),
-                role: 'user'
-            };
-
-            const { data, error } = await db.from('app_users').insert([newUser]).select().single();
-            if (error) {
-                alert("❌ خطأ في التسجيل (ربما الإيميل مسجل مسبقاً): " + error.message);
+            if (data.role === 'user') {
+                alert("⛔ الدخول مخصص للموظفين والأونر فقط.");
                 return;
             }
+
             currentUser = data;
+            isTreasuryUnlocked = false;
             sessionStorage.setItem('mrc_user', JSON.stringify(data));
             launchApp();
         }
@@ -657,7 +573,7 @@
         function logout() {
             sessionStorage.removeItem('mrc_user');
             currentUser = null;
-            knownNotesMap = {};
+            isTreasuryUnlocked = false;
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.remove('hidden');
         }
@@ -667,18 +583,16 @@
             document.getElementById('appScreen').classList.remove('hidden');
 
             document.getElementById('currentUserName').textContent = currentUser.full_name;
-            const roleNames = { owner: '👑 الأونر (Full Admin)', employee: '💼 موظف', user: '👤 عميل' };
-            document.getElementById('currentUserRoleBadge').textContent = roleNames[currentUser.role];
+            const roleNames = { owner: '👑 الأونر (Full Admin)', employee: '💼 موظف' };
+            document.getElementById('currentUserRoleBadge').textContent = roleNames[currentUser.role] || 'موظف';
 
             document.querySelectorAll('.owner-only').forEach(el => el.classList.toggle('hidden', currentUser.role !== 'owner'));
-            document.querySelectorAll('.staff-only').forEach(el => el.classList.toggle('hidden', currentUser.role === 'user'));
 
             switchPage('deals');
-            await loadAllData(true);
+            await loadAllData();
         }
 
-        // جلب البيانات وفحص أي إشعارات جديدة لإظهار Toast فوري
-        async function loadAllData(isInitial = false) {
+        async function loadAllData() {
             if (!db || !currentUser) return;
             const [empRes, dealRes, finRes, trRes, usrRes] = await Promise.all([
                 db.from('employees').select('*').order('created_at', { ascending: false }),
@@ -688,21 +602,8 @@
                 db.from('app_users').select('*').order('created_at', { ascending: false })
             ]);
 
-            const newDeals = dealRes.data || [];
-
-            // فحص التغييرات لإطلاق نوتيفيكشن منبثقة للعميل أو الموظف أو الأونر
-            newDeals.forEach(d => {
-                const isRelevantToUser = currentUser.role !== 'user' || d.client_user_id === currentUser.id || d.client_phone === currentUser.phone;
-                if (isRelevantToUser && d.owner_note) {
-                    if (!isInitial && knownNotesMap[d.id] && knownNotesMap[d.id] !== d.owner_note) {
-                        showToast(`تحديث جديد على ديل (${d.client_name}): ${d.owner_note}`, 'success');
-                    }
-                    knownNotesMap[d.id] = d.owner_note;
-                }
-            });
-
             state.employees = empRes.data || [];
-            state.deals = newDeals;
+            state.deals = dealRes.data || [];
             state.empFinancials = finRes.data || [];
             state.treasury = trRes.data || [];
             state.users = usrRes.data || [];
@@ -710,7 +611,76 @@
             renderAll();
         }
 
-        // حساب رصيد الخزنة المتاح
+        // =========================================================================
+        // 2. نظام حماية الخزنة بباسورد (Treasury Password Protection)
+        // =========================================================================
+        function getSavedTreasuryPassword() {
+            // يقرأ باسورد الخزنة المحفوظ في الداتابيز، أو يستخدم الباسورد الافتراضي 1234
+            const lockRecord = state.users.find(u => u.email === 'treasury@mrc.lock');
+            return lockRecord ? lockRecord.password_hash : '1234';
+        }
+
+        function requestTreasuryAccess() {
+            if (isTreasuryUnlocked) {
+                switchPage('treasury');
+            } else {
+                document.getElementById('treasuryPassInput').value = '';
+                openModal('treasuryPasswordModal');
+                setTimeout(() => document.getElementById('treasuryPassInput').focus(), 100);
+            }
+        }
+
+        function verifyTreasuryPassword(e) {
+            e.preventDefault();
+            const entered = document.getElementById('treasuryPassInput').value.trim();
+            const correctPass = getSavedTreasuryPassword();
+            const ownerAccount = state.users.find(u => u.role === 'owner');
+            const ownerLoginPass = ownerAccount ? ownerAccount.password_hash : null;
+
+            // يفتح إذا أدخل باسورد الخزنة المخصص أو باسورد حساب الأونر
+            if (entered === correctPass || (ownerLoginPass && entered === ownerLoginPass)) {
+                isTreasuryUnlocked = true;
+                closeModal('treasuryPasswordModal');
+                switchPage('treasury');
+                showToast("🔓 تم فتح الخزنة بنجاح", "success");
+            } else {
+                alert("❌ باسورد الخزنة غير صحيح! لا يمكنك الدخول.");
+            }
+        }
+
+        function lockTreasury() {
+            isTreasuryUnlocked = false;
+            switchPage('deals');
+            showToast("🔒 تم قفل الخزنة", "info");
+        }
+
+        async function saveNewTreasuryPassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newTreasuryPass').value.trim();
+            const existingLock = state.users.find(u => u.email === 'treasury@mrc.lock');
+
+            if (existingLock) {
+                const { error } = await db.from('app_users').update({ password_hash: newPass }).eq('id', existingLock.id);
+                if (error) return alert("❌ خطأ أثناء تحديث الباسورد: " + error.message);
+            } else {
+                const { error } = await db.from('app_users').insert([{
+                    full_name: 'قفل الخزنة',
+                    email: 'treasury@mrc.lock',
+                    phone: '0000',
+                    password_hash: newPass,
+                    role: 'user'
+                }]);
+                if (error) return alert("❌ خطأ أثناء حفظ الباسورد: " + error.message);
+            }
+
+            closeModal('changeTreasuryPassModal');
+            showToast("🔑 تم تغيير باسورد الخزنة بنجاح!", "success");
+            await loadAllData();
+        }
+
+        // =========================================================================
+        // 3. حساب رصيد الخزنة المتاح
+        // =========================================================================
         function getCurrentTreasuryBalance() {
             let totalIn = 0, totalOut = 0;
             state.treasury.forEach(t => {
@@ -720,19 +690,21 @@
             return totalIn - totalOut;
         }
 
+        // =========================================================================
+        // 4. إدارة الصفقات (Deals) بواسطة الموظف والأونر
+        // =========================================================================
         function openNewDealModal() {
             document.getElementById('dealForm').reset();
             document.getElementById('editDealId').value = "";
             document.getElementById('oldAmountPaid').value = "0";
-            document.getElementById('dealModalTitle').textContent = "تسجيل ديل / عرض منتج جديد";
-            document.getElementById('saveDealBtn').textContent = "حفظ البيانات";
+            document.getElementById('dealModalTitle').textContent = "تسجيل بيانات عميل وديل جديد";
             document.getElementById('imagePreview').classList.add('hidden');
             compressedImageDataUrl = "";
 
-            if (currentUser && currentUser.role === 'user') {
-                document.getElementById('clientName').value = currentUser.full_name;
-                document.getElementById('clientPhone').value = currentUser.phone;
-            }
+            // اختيار الموظف الحالي تلقائياً لو كان اللي فاتح موظف
+            const myEmp = state.employees.find(e => e.user_id === currentUser.id);
+            if (myEmp) document.getElementById('dealEmployee').value = myEmp.id;
+
             openModal('dealModal');
         }
 
@@ -742,23 +714,14 @@
 
             document.getElementById('editDealId').value = d.id;
             document.getElementById('oldAmountPaid').value = d.amount_paid || 0;
-
-            if (currentUser.role === 'employee') {
-                document.getElementById('dealModalTitle').textContent = `💼 إرسال عرض سعر للعميل والأونر`;
-                document.getElementById('amountPaidLabel').textContent = "💵 السعر اللي بتعرضه لتخليص الديل (ج.م) *";
-                document.getElementById('saveDealBtn').textContent = "إرسال عرض السعر للعميل وللأونر";
-            } else {
-                document.getElementById('dealModalTitle').textContent = `👑 تخليص / تعديل ديل العميل: ${d.client_name}`;
-                document.getElementById('amountPaidLabel').textContent = "💵 السعر المعروض أو المدفوع (ج.م)";
-                document.getElementById('saveDealBtn').textContent = "حفظ التعديلات";
-            }
+            document.getElementById('dealModalTitle').textContent = `تعديل / تخليص ديل العميل: ${d.client_name}`;
 
             document.getElementById('clientName').value = d.client_name || '';
             document.getElementById('clientPhone').value = d.client_phone || '';
             document.getElementById('clientLocation').value = d.client_location || '';
 
-            const myEmpRecord = state.employees.find(e => e.user_id === currentUser.id);
-            document.getElementById('dealEmployee').value = d.employee_id || (myEmpRecord ? myEmpRecord.id : '');
+            const myEmp = state.employees.find(e => e.user_id === currentUser.id);
+            document.getElementById('dealEmployee').value = d.employee_id || (myEmp ? myEmp.id : '');
 
             document.getElementById('dealDetails').value = d.deal_details || '';
             document.getElementById('amountPaid').value = d.amount_paid || 0;
@@ -786,46 +749,27 @@
             openModal('dealModal');
         }
 
-        // حفظ الديل أو إرسال عرض سعر من الموظف للعميل والأونر
         async function saveDeal(e) {
             e.preventDefault();
             const editId = document.getElementById('editDealId').value;
             const oldPaid = Number(document.getElementById('oldAmountPaid').value || 0);
             const newPaid = Number(document.getElementById('amountPaid').value || 0);
+            const diffPaid = newPaid - oldPaid;
+            const status = document.getElementById('dealStatus').value;
 
-            const myEmpRecord = state.employees.find(emp => emp.user_id === currentUser.id);
-            const selectedEmpId = document.getElementById('dealEmployee').value || (myEmpRecord ? myEmpRecord.id : null);
-
-            let targetStatus = 'in_progress';
-            let ownerNote = null;
-
-            if (currentUser.role === 'owner') {
-                targetStatus = editId ? document.getElementById('dealStatus').value : (newPaid > 0 ? 'completed' : 'in_progress');
-                const diffPaid = newPaid - oldPaid;
-
-                if (targetStatus === 'completed' && diffPaid > 0) {
-                    const currentBalance = getCurrentTreasuryBalance();
-                    if (currentBalance < diffPaid) {
-                        return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المطلوب للديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-                    }
+            // التحقق من رصيد الخزنة إذا تم دفع مبلغ للعميل
+            if (diffPaid > 0) {
+                const currentBalance = getCurrentTreasuryBalance();
+                if (currentBalance < diffPaid) {
+                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المدفوع في الديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان يتسجل الخصم في الحسابات.`);
                 }
-                if (targetStatus === 'completed' && newPaid > 0) {
-                    ownerNote = `✅ تمت الموافقة وتخليص الديل بمبلغ ${newPaid.toLocaleString()} ج.م`;
-                } else if (newPaid > 0) {
-                    targetStatus = 'pending_owner';
-                    ownerNote = `💬 عرض سعر جديد من الإدارة بمبلغ ${newPaid.toLocaleString()} ج.م - بانتظار موافقة العميل`;
-                }
-            } else if (currentUser.role === 'employee') {
-                if (newPaid > 0 || editId) {
-                    targetStatus = 'pending_owner';
-                    ownerNote = `💬 الموظف (${currentUser.full_name}) عرض سعر ${newPaid.toLocaleString()} ج.م لتخليص الديل - متاح لموافقة العميل أو الأونر`;
-                }
-            } else if (currentUser.role === 'user') {
-                ownerNote = `🆕 العميل (${currentUser.full_name}) أضاف الديل وطالب مبلغ ${Number(document.getElementById('amountRequested').value || 0).toLocaleString()} ج.م`;
             }
 
+            const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
+            const selectedEmpId = document.getElementById('dealEmployee').value || (myEmp ? myEmp.id : null);
+
             const dealPayload = {
-                employee_id: currentUser.role !== 'user' ? selectedEmpId : null,
+                employee_id: selectedEmpId,
                 client_name: document.getElementById('clientName').value.trim(),
                 client_phone: document.getElementById('clientPhone').value.trim(),
                 client_location: document.getElementById('clientLocation').value.trim(),
@@ -834,10 +778,8 @@
                 amount_requested: Number(document.getElementById('amountRequested').value || 0),
                 meeting_time: document.getElementById('meetingTime').value || null,
                 item_image_url: compressedImageDataUrl || null,
-                status: targetStatus
+                status: status
             };
-
-            if (ownerNote) dealPayload.owner_note = ownerNote;
 
             let savedDealId = editId;
 
@@ -845,211 +787,94 @@
                 const { error } = await db.from('deals').update(dealPayload).eq('id', editId);
                 if (error) return alert("❌ خطأ أثناء تحديث الديل: " + error.message);
             } else {
-                dealPayload.client_user_id = currentUser.role === 'user' ? currentUser.id : null;
                 const { data: insertedDeal, error } = await db.from('deals').insert([dealPayload]).select().single();
                 if (error) return alert("❌ خطأ أثناء حفظ الديل: " + error.message);
                 savedDealId = insertedDeal.id;
             }
 
-            if (currentUser.role === 'owner' && targetStatus === 'completed') {
-                const diffPaid = newPaid - oldPaid;
-                if (diffPaid > 0) {
-                    await db.from('treasury_transactions').insert([{
-                        transaction_type: 'out',
-                        amount: diffPaid,
-                        description: `شراء وتخليص ديل العميل: ${dealPayload.client_name} (${dealPayload.deal_details})`,
-                        related_deal_id: savedDealId
-                    }]);
-                }
+            // خصم المبلغ المدفوع من الخزنة تلقائياً وتسجيله بالتفصيل
+            if (diffPaid > 0) {
+                await db.from('treasury_transactions').insert([{
+                    transaction_type: 'out',
+                    amount: diffPaid,
+                    description: `مدفوعات شراء ديل العميل: ${dealPayload.client_name} (${dealPayload.deal_details}) - بواسطة: ${currentUser.full_name}`,
+                    related_deal_id: savedDealId
+                }]);
             }
 
-            showToast("تم حفظ بيانات الديل وإرسال الإشعار للأطراف بنجاح!", "success");
+            showToast("تم حفظ بيانات الديل بنجاح!", "success");
             compressedImageDataUrl = "";
             document.getElementById('dealForm').reset();
             document.getElementById('imagePreview').classList.add('hidden');
             closeModal('dealModal');
-            await loadAllData(true);
+            await loadAllData();
         }
 
         // =========================================================================
-        // ميزة موافقة العميل المباشرة على السعر المعروض أو طلب إعادة تسعير
+        // 5. السلف الفورية (تُخصم مباشرة من الخزنة بدون انتظار موافقة) + البونص
         // =========================================================================
-        async function clientAcceptOffer(dealId) {
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
-            const agreedPrice = Number(d.amount_paid || 0);
-            if (agreedPrice <= 0) return alert("لا يوجد سعر معروض حالياً للموافقة عليه.");
-
-            if (!confirm(`هل أنت موافق نهائياً على بيع المنتج وإتمام الديل بمبلغ ${agreedPrice.toLocaleString()} ج.م؟`)) return;
-
-            const note = `🎉 وافق العميل (${d.client_name}) على السعر المعروض (${agreedPrice.toLocaleString()} ج.م) وتم إتمام الديل!`;
-
-            const { error } = await db.from('deals').update({
-                status: 'completed',
-                owner_note: note
-            }).eq('id', dealId);
-
-            if (error) return alert("❌ خطأ أثناء تأكيد الموافقة: " + error.message);
-
-            // إذا كان هناك رصيد في الخزنة يُخصم تلقائياً، وإذا لم يكن يُسجل الديل كمكتمل وينبه الأونر
-            const currentBalance = getCurrentTreasuryBalance();
-            if (currentBalance >= agreedPrice) {
-                await db.from('treasury_transactions').insert([{
-                    transaction_type: 'out',
-                    amount: agreedPrice,
-                    description: `إتمام ديل بموافقة العميل: ${d.client_name} (${d.deal_details})`,
-                    related_deal_id: d.id
-                }]);
-            }
-
-            showToast(`تمت الموافقة على الديل بمبلغ ${agreedPrice.toLocaleString()} ج.م بنجاح!`, 'success');
-            await loadAllData(true);
-        }
-
-        function openClientCounterModal(dealId) {
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
-            document.getElementById('counterDealId').value = d.id;
-            document.getElementById('counterDealDetails').textContent = d.deal_details;
-            document.getElementById('counterCurrentOffer').textContent = Number(d.amount_paid || 0).toLocaleString();
-            document.getElementById('counterOldReq').textContent = Number(d.amount_requested || 0).toLocaleString();
-            document.getElementById('clientNewPrice').value = d.amount_requested || '';
-            document.getElementById('clientCounterNote').value = '';
-            openModal('clientCounterModal');
-        }
-
-        async function submitClientCounterOffer(e) {
-            e.preventDefault();
-            const dealId = document.getElementById('counterDealId').value;
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
-
-            const newReqPrice = Number(document.getElementById('clientNewPrice').value);
-            const extraNote = document.getElementById('clientCounterNote').value.trim();
-            const noteSuffix = extraNote ? ` - ملاحظة العميل: (${extraNote})` : '';
-
-            const message = `🔄 العميل (${d.client_name}) طلب إعادة تسعير واقترح مبلغ ${newReqPrice.toLocaleString()} ج.م بدلاً من ${Number(d.amount_paid || 0).toLocaleString()} ج.م${noteSuffix}`;
-
-            const { error } = await db.from('deals').update({
-                amount_requested: newReqPrice,
-                status: 'client_counter',
-                owner_note: message
-            }).eq('id', dealId);
-
-            if (error) return alert("❌ خطأ أثناء إرسال السعر الجديد: " + error.message);
-
-            closeModal('clientCounterModal');
-            showToast(`تم إرسال السعر المقترح (${newReqPrice.toLocaleString()} ج.م) للموظف والإدارة!`, 'info');
-            await loadAllData(true);
-        }
-
-        // موافقة الموظف أو الأونر المباشرة على السعر الذي اقترحه العميل
-        async function staffAcceptClientPrice(dealId) {
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
-            const clientPrice = Number(d.amount_requested || 0);
-
-            if (currentUser.role === 'owner') {
-                const currentBalance = getCurrentTreasuryBalance();
-                if (currentBalance < clientPrice) {
-                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nسعر العميل المطلوب: ${clientPrice.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-                }
-                const msg = `✅ وافقت الإدارة على سعر العميل (${clientPrice.toLocaleString()} ج.م) وتم إتمام الديل بنجاح!`;
-                await db.from('deals').update({
-                    amount_paid: clientPrice,
-                    status: 'completed',
-                    owner_note: msg
-                }).eq('id', dealId);
-
-                await db.from('treasury_transactions').insert([{
-                    transaction_type: 'out',
-                    amount: clientPrice,
-                    description: `شراء وتخليص ديل العميل: ${d.client_name} (${d.deal_details})`,
-                    related_deal_id: d.id
-                }]);
-                showToast(`تم اعتماد سعر العميل (${clientPrice.toLocaleString()} ج.م) وخصمه من الخزنة!`, 'success');
+        function openEmpFinancialModal() {
+            const myEmp = state.employees.find(e => e.user_id === currentUser.id);
+            const empSelect = document.getElementById('finEmpId');
+            if (currentUser.role === 'employee' && myEmp) {
+                empSelect.value = myEmp.id;
+                empSelect.disabled = true; // الموظف يسجل السلفة لنفسه فقط
+                document.getElementById('finType').value = 'loan';
             } else {
-                // الموظف يقبل سعر العميل أو يرفعه للتنفيذ
-                const msg = `✅ وافق الموظف (${currentUser.full_name}) على سعر العميل (${clientPrice.toLocaleString()} ج.م) وتم الاتفاق!`;
-                await db.from('deals').update({
-                    amount_paid: clientPrice,
-                    status: 'pending_owner',
-                    owner_note: msg
-                }).eq('id', dealId);
-                showToast(`تم تثبيت السعر المتفق عليه (${clientPrice.toLocaleString()} ج.م) وإبلاغ العميل والأونر!`, 'success');
+                empSelect.disabled = false;
             }
-            await loadAllData(true);
+            openModal('empFinancialModal');
         }
 
-        // قرار الأونر (موافقة / تعديل السعر / رفض)
-        function openOwnerDecisionModal(dealId) {
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
+        async function saveEmpFinancial(e) {
+            e.preventDefault();
+            const employee_id = document.getElementById('finEmpId').value;
+            const transaction_type = document.getElementById('finType').value;
+            const amount = Number(document.getElementById('finAmount').value);
+            const notes = document.getElementById('finNotes').value.trim();
 
-            document.getElementById('decisionDealId').value = d.id;
-            document.getElementById('decClientName').textContent = d.client_name;
-            document.getElementById('decDealDetails').textContent = d.deal_details;
-            document.getElementById('decRequested').textContent = Number(d.amount_requested || 0).toLocaleString();
-            document.getElementById('decProposed').textContent = Number(d.amount_paid || 0).toLocaleString();
-            document.getElementById('ownerFinalPrice').value = d.amount_paid > 0 ? d.amount_paid : d.amount_requested;
-            document.getElementById('ownerCustomNote').value = '';
+            // التحقق الإجباري من رصيد الخزنة قبل تسجيل السلفة أو البونص
+            const currentBalance = getCurrentTreasuryBalance();
+            const typeLabel = transaction_type === 'loan' ? 'السلفة' : 'البونص';
 
-            openModal('ownerDecisionModal');
+            if (currentBalance < amount) {
+                return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان الكلام ده يتسجل في الخزنة والتقفيل.`);
+            }
+
+            // السلفة تُسجل معتمدة فوراً (approved) بدون انتظار موافقة الأونر
+            const { data: finData, error } = await db
+                .from('employee_financials')
+                .insert([{
+                    employee_id,
+                    transaction_type,
+                    amount,
+                    notes,
+                    approval_status: 'approved'
+                }])
+                .select()
+                .single();
+
+            if (error) return alert("❌ خطأ أثناء التسجيل: " + error.message);
+
+            // خصم المبلغ فوراً من الخزنة وتسجيله بالتفصيل والوقت
+            const emp = state.employees.find(x => x.id === employee_id);
+            const actionTitle = transaction_type === 'loan' ? 'سحب سلفة للموظف' : 'صرف بونص (مكافأة) للموظف';
+            const noteText = notes ? ` - البيان: ${notes}` : '';
+
+            await db.from('treasury_transactions').insert([{
+                transaction_type: 'out',
+                amount: amount,
+                description: `${actionTitle}: ${emp ? emp.full_name : ''}${noteText}`,
+                related_emp_financial_id: finData.id
+            }]);
+
+            showToast(`تم تسجيل ${typeLabel} بمبلغ ${amount.toLocaleString()} ج.م وخصمها من الخزنة فوراً!`, "success");
+            e.target.reset();
+            closeModal('empFinancialModal');
+            await loadAllData();
         }
 
-        async function executeOwnerDecision(decisionType) {
-            const dealId = document.getElementById('decisionDealId').value;
-            const d = state.deals.find(x => x.id === dealId);
-            if (!d) return;
-
-            const finalPrice = Number(document.getElementById('ownerFinalPrice').value || 0);
-            const customNote = document.getElementById('ownerCustomNote').value.trim();
-            const noteSuffix = customNote ? ` (${customNote})` : '';
-
-            if (decisionType === 'approve' && finalPrice > 0) {
-                const currentBalance = getCurrentTreasuryBalance();
-                if (currentBalance < finalPrice) {
-                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي للموافقة على الديل!\n\nمبلغ الديل المطلوب: ${finalPrice.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-                }
-            }
-
-            let newStatus = 'in_progress';
-            let messageToBoth = '';
-
-            if (decisionType === 'approve') {
-                newStatus = 'completed';
-                messageToBoth = `✅ تمت الموافقة النهائية من الأونر وتخليص الديل بمبلغ ${finalPrice.toLocaleString()} ج.م${noteSuffix}`;
-            } else if (decisionType === 'modify') {
-                newStatus = 'price_modified';
-                messageToBoth = `🔄 عرض سعر معدل من الأونر بمبلغ ${finalPrice.toLocaleString()} ج.م - بانتظار موافقة العميل أو التفاوض${noteSuffix}`;
-            } else if (decisionType === 'reject') {
-                newStatus = 'cancelled';
-                messageToBoth = `❌ تم رفض العرض / الديل من قبل الأونر${noteSuffix}`;
-            }
-
-            const { error } = await db.from('deals').update({
-                amount_paid: decisionType === 'reject' ? 0 : finalPrice,
-                status: newStatus,
-                owner_note: messageToBoth
-            }).eq('id', dealId);
-
-            if (error) return alert("❌ خطأ أثناء حفظ قرار الأونر: " + error.message);
-
-            if (decisionType === 'approve' && finalPrice > 0) {
-                await db.from('treasury_transactions').insert([{
-                    transaction_type: 'out',
-                    amount: finalPrice,
-                    description: `اعتماد وتخليص ديل العميل: ${d.client_name} (${d.deal_details})`,
-                    related_deal_id: d.id
-                }]);
-            }
-
-            closeModal('ownerDecisionModal');
-            showToast("تم تنفيذ القرار وإرسال إشعار فوري للعميل والموظف!", "success");
-            await loadAllData(true);
-        }
-
-        // إنشاء حساب موظف جديد
+        // 6. إنشاء حساب موظف جديد بواسطة الأونر
         async function ownerCreateEmployee(e) {
             e.preventDefault();
             const full_name = document.getElementById('empName').value.trim();
@@ -1075,81 +900,10 @@
             showToast(`تم إنشاء حساب الموظف (${full_name}) بنجاح!`, 'success');
             e.target.reset();
             closeModal('addEmployeeModal');
-            await loadAllData(true);
+            await loadAllData();
         }
 
-        // السلف والبونص والخزنة
-        async function saveEmpFinancial(e) {
-            e.preventDefault();
-            const employee_id = document.getElementById('finEmpId').value;
-            const transaction_type = document.getElementById('finType').value;
-            const amount = Number(document.getElementById('finAmount').value);
-            const notes = document.getElementById('finNotes').value.trim();
-            const approval_status = currentUser.role === 'owner' ? 'approved' : 'pending';
-
-            if (approval_status === 'approved') {
-                const currentBalance = getCurrentTreasuryBalance();
-                const typeLabel = transaction_type === 'loan' ? 'السلفة' : 'البونص';
-                if (currentBalance < amount) {
-                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-                }
-            }
-
-            const { data: finData, error } = await db
-                .from('employee_financials')
-                .insert([{ employee_id, transaction_type, amount, notes, approval_status }])
-                .select()
-                .single();
-
-            if (error) return alert("❌ خطأ: " + error.message);
-
-            if (approval_status === 'approved') {
-                const emp = state.employees.find(x => x.id === employee_id);
-                const actionTitle = transaction_type === 'loan' ? 'صرف سلفة للموظف' : 'صرف بونص (مكافأة) للموظف';
-                const noteText = notes ? ` - البيان: ${notes}` : '';
-
-                await db.from('treasury_transactions').insert([{
-                    transaction_type: 'out',
-                    amount: amount,
-                    description: `${actionTitle}: ${emp ? emp.full_name : ''}${noteText}`,
-                    related_emp_financial_id: finData.id
-                }]);
-                showToast("تمت العملية وخصم المبلغ من الخزنة بنجاح!", "success");
-            } else {
-                showToast("تم إرسال طلب السلفة للأونر للموافقة.", "info");
-            }
-
-            e.target.reset();
-            closeModal('empFinancialModal');
-            await loadAllData(true);
-        }
-
-        async function approveLoan(id, empId, amount) {
-            const loanAmount = Number(amount);
-            const currentBalance = getCurrentTreasuryBalance();
-
-            if (currentBalance < loanAmount) {
-                return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي للموافقة على السلفة!\n\nمبلغ السلفة المطلوب: ${loanAmount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-            }
-
-            const finRecord = state.empFinancials.find(f => f.id === id);
-            const noteText = (finRecord && finRecord.notes) ? ` - البيان: ${finRecord.notes}` : '';
-
-            const { error } = await db.from('employee_financials').update({ approval_status: 'approved' }).eq('id', id);
-            if (error) return alert("❌ خطأ أثناء الموافقة: " + error.message);
-
-            const emp = state.employees.find(x => x.id === empId);
-            await db.from('treasury_transactions').insert([{
-                transaction_type: 'out',
-                amount: loanAmount,
-                description: `موافقة وصرف سلفة للموظف: ${emp ? emp.full_name : ''}${noteText}`,
-                related_emp_financial_id: id
-            }]);
-
-            showToast(`تمت الموافقة على السلفة وخصم ${loanAmount.toLocaleString()} ج.م من الخزنة!`, 'success');
-            await loadAllData(true);
-        }
-
+        // 7. إضافة حركة خزنة يدوية
         async function saveTreasuryTransaction(e) {
             e.preventDefault();
             const type = document.getElementById('trType').value;
@@ -1172,13 +926,13 @@
             e.target.reset();
             closeModal('treasuryModal');
             showToast("تم تسجيل الحركة في الخزنة بنجاح!", "success");
-            await loadAllData(true);
+            await loadAllData();
         }
 
         async function deleteRow(table, id) {
             if (!confirm("هل أنت متأكد من الحذف النهائي؟")) return;
             await db.from(table).delete().eq('id', id);
-            await loadAllData(true);
+            await loadAllData();
         }
 
         let searchTimer;
@@ -1211,45 +965,11 @@
         }
 
         // =========================================================================
-        // عرض الجداول والإشعارات وأزرار التفاوض
+        // عرض الجداول (Rendering)
         // =========================================================================
         function renderDeals(query = '') {
             const tbody = document.getElementById('dealsTableBody');
             let list = state.deals;
-
-            if (currentUser && currentUser.role === 'user') {
-                list = list.filter(d => d.client_user_id === currentUser.id || d.client_phone === currentUser.phone);
-            }
-
-            // تحديث جرس الإشعارات وصندوق التنبيهات
-            const dealsWithNotes = list.filter(d => d.owner_note);
-            const notifBox = document.getElementById('dealsNotificationsBox');
-            const notifList = document.getElementById('dealsNotificationsList');
-            const countBadge = document.getElementById('notifCountBadge');
-            const dropdownList = document.getElementById('notifDropdownList');
-
-            if (dealsWithNotes.length > 0) {
-                notifBox.classList.remove('hidden');
-                countBadge.classList.remove('hidden');
-                countBadge.textContent = dealsWithNotes.length;
-
-                const notifHtml = dealsWithNotes.slice(0, 8).map(d => `
-                    <div class="bg-white p-2.5 rounded-lg border border-blue-100 flex justify-between items-center">
-                        <span>📌 <b>(${d.client_name} - ${d.deal_details}):</b> ${d.owner_note}</span>
-                    </div>
-                `).join('');
-                notifList.innerHTML = notifHtml;
-                dropdownList.innerHTML = dealsWithNotes.map(d => `
-                    <div class="p-3 hover:bg-slate-50">
-                        <div class="font-bold text-slate-900">${d.client_name} - ${d.deal_details}</div>
-                        <div class="text-blue-700 mt-0.5">${d.owner_note}</div>
-                    </div>
-                `).join('');
-            } else {
-                notifBox.classList.add('hidden');
-                countBadge.classList.add('hidden');
-                dropdownList.innerHTML = `<div class="p-4 text-center text-slate-400">لا توجد إشعارات حالياً</div>`;
-            }
 
             if (query) {
                 list = list.filter(d =>
@@ -1259,7 +979,7 @@
             }
 
             if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">لا توجد صفقات مسجلة</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">لا توجد صفقات مسجلة حالياً</td></tr>`;
                 return;
             }
 
@@ -1267,20 +987,13 @@
                 const emp = state.employees.find(e => e.id === d.employee_id);
                 let badge = '';
                 if (d.status === 'completed') {
-                    badge = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ تم الاتفاق والشراء</span>`;
-                } else if (d.status === 'pending_owner') {
-                    badge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">💬 عرض سعر للعميل / الأونر</span>`;
-                } else if (d.status === 'client_counter') {
-                    badge = `<span class="bg-purple-100 text-purple-800 px-2.5 py-1 rounded-full text-xs font-bold">🔄 العميل اقترح سعر جديد</span>`;
-                } else if (d.status === 'price_modified') {
-                    badge = `<span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full text-xs font-bold">🔄 تم تعديل السعر للعميل</span>`;
+                    badge = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ تم الشراء والتخليص</span>`;
                 } else if (d.status === 'cancelled') {
-                    badge = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-full text-xs font-bold">❌ مرفوض / ملغي</span>`;
+                    badge = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-full text-xs font-bold">❌ ملغي</span>`;
                 } else {
-                    badge = `<span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد المراجعة</span>`;
+                    badge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد المتابعة (تذكير 24س)</span>`;
                 }
 
-                // الصورة تفتح في نفس الصفحة عبر viewDealImage
                 const imageHtml = d.item_image_url
                     ? `<div onclick="viewDealImage('${d.id}')" class="relative group cursor-pointer inline-block">
                          <img src="${d.item_image_url}" class="h-14 w-14 rounded-lg object-cover border-2 border-slate-300 group-hover:border-blue-500 transition">
@@ -1288,71 +1001,32 @@
                        </div>`
                     : '<span class="text-xs text-slate-400">لا توجد</span>';
 
-                // أزرار التحكم والتفاوض حسب صلاحية المستخدم (عميل / موظف / أونر)
-                let actionsHtml = '';
-                if (currentUser.role === 'user') {
-                    // أزرار العميل صاحب الديل
-                    if (d.status !== 'completed' && d.status !== 'cancelled') {
-                        actionsHtml = `<div class="flex flex-col gap-1.5">`;
-                        if (Number(d.amount_paid) > 0) {
-                            actionsHtml += `
-                                <button onclick="clientAcceptOffer('${d.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
-                                    ✅ موافقة على السعر (${Number(d.amount_paid).toLocaleString()} ج.م)
-                                </button>`;
-                        }
-                        actionsHtml += `
-                            <button onclick="openClientCounterModal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
-                                🔄 إعادة تسعير (اقتراح سعر آخر)
-                            </button>
-                        </div>`;
-                    } else {
-                        actionsHtml = `<span class="text-xs font-bold text-slate-400">تم إغلاق التفاوض</span>`;
-                    }
-                } else {
-                    // أزرار الموظف والأونر
-                    actionsHtml = `<div class="flex flex-col gap-1.5">`;
-                    if (d.status === 'client_counter' && Number(d.amount_requested) > 0) {
-                        actionsHtml += `
-                            <button onclick="staffAcceptClientPrice('${d.id}')" class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
-                                ✅ قبول سعر العميل (${Number(d.amount_requested).toLocaleString()} ج.م)
-                            </button>`;
-                    }
-                    if (currentUser.role === 'owner') {
-                        actionsHtml += `
-                            <button onclick="openOwnerDecisionModal('${d.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
-                                ⚖️ قرار الأونر (موافقة/تعديل/رفض)
-                            </button>`;
-                    }
-                    actionsHtml += `
-                        <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
-                            ✏️ ${currentUser.role === 'employee' ? 'إرسال عرض سعر للعميل' : 'تعديل بيانات الديل'}
-                        </button>`;
-                    if (currentUser.role === 'owner') {
-                        actionsHtml += `<button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>`;
-                    }
-                    actionsHtml += `</div>`;
-                }
-
                 return `
                 <tr class="hover:bg-slate-50">
                     <td class="p-3.5">
-                        <div class="font-bold">${d.client_name}</div>
-                        <a href="https://wa.me/2${d.client_phone}" target="_blank" class="text-xs text-emerald-600 font-bold">📱 ${d.client_phone}</a>
+                        <div class="font-bold text-slate-900">${d.client_name}</div>
+                        <a href="https://wa.me/2${d.client_phone}" target="_blank" class="text-xs text-emerald-600 font-bold hover:underline">📱 ${d.client_phone}</a>
                     </td>
                     <td class="p-3.5">${d.client_location || '-'}</td>
-                    <td class="p-3.5 max-w-xs">${d.deal_details}</td>
+                    <td class="p-3.5 max-w-xs font-medium">${d.deal_details}</td>
                     <td class="p-3.5">
-                        <div class="text-xs text-emerald-700 font-bold">معروض للعميل: ${Number(d.amount_paid).toLocaleString()} ج.م</div>
-                        <div class="text-xs text-rose-600 font-bold">العميل طالب: ${Number(d.amount_requested).toLocaleString()} ج.م</div>
+                        <div class="text-xs text-emerald-700 font-bold">دفعتله: ${Number(d.amount_paid).toLocaleString()} ج.م</div>
+                        <div class="text-xs text-rose-600 font-bold">طالب: ${Number(d.amount_requested).toLocaleString()} ج.م</div>
                     </td>
                     <td class="p-3.5 text-xs font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</td>
                     <td class="p-3.5">${imageHtml}</td>
                     <td class="p-3.5">
                         ${badge}
                         <div class="text-xs text-slate-500 mt-1">${emp ? '👤 الموظف: ' + emp.full_name : '<span class="text-amber-600">بدون موظف</span>'}</div>
-                        ${d.owner_note ? `<div class="mt-1.5 text-[11px] bg-blue-50 text-blue-900 p-2 rounded-lg border border-blue-200 font-bold">${d.owner_note}</div>` : ''}
                     </td>
-                    <td class="p-3.5">${actionsHtml}</td>
+                    <td class="p-3.5">
+                        <div class="flex flex-col gap-1.5">
+                            <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
+                                ✏️ تخليص / تعديل الديل
+                            </button>
+                            ${currentUser.role === 'owner' ? `<button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>` : ''}
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -1363,7 +1037,7 @@
             document.getElementById('finEmpId').innerHTML = opts;
 
             document.getElementById('employeesCardsContainer').innerHTML = state.employees.map(emp => {
-                const recs = state.empFinancials.filter(f => f.employee_id === emp.id && f.approval_status === 'approved');
+                const recs = state.empFinancials.filter(f => f.employee_id === emp.id);
                 const loans = recs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
                 const bonus = recs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
                 const net = Number(emp.base_salary) + bonus - loans;
@@ -1379,9 +1053,9 @@
                     </div>
                     <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-lg">
                         <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${Number(emp.base_salary).toLocaleString()} ج.م</b></div>
-                        <div class="flex justify-between text-emerald-700"><span>+ البونص:</span><b>${bonus.toLocaleString()} ج.م</b></div>
-                        <div class="flex justify-between text-rose-600"><span>- السلف:</span><b>${loans.toLocaleString()} ج.م</b></div>
-                        <div class="border-t pt-1.5 flex justify-between font-extrabold text-blue-700"><span>الصافي:</span><span>${net.toLocaleString()} ج.م</span></div>
+                        <div class="flex justify-between text-emerald-700"><span>+ إجمالي البونص:</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                        <div class="flex justify-between text-rose-600"><span>- إجمالي السلف المسحوبة:</span><b>${loans.toLocaleString()} ج.م</b></div>
+                        <div class="border-t pt-1.5 flex justify-between font-extrabold text-blue-700"><span>صافي المرتب:</span><span>${net.toLocaleString()} ج.م</span></div>
                     </div>
                 </div>`;
             }).join('');
@@ -1391,13 +1065,12 @@
                 return `
                 <tr>
                     <td class="p-3 font-bold">${emp ? emp.full_name : '-'}</td>
-                    <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
+                    <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
                     <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
                     <td class="p-3">${f.notes || '-'}</td>
                     <td class="p-3 text-xs">${new Date(f.transaction_date).toLocaleString('ar-EG')}</td>
-                    <td class="p-3">${f.approval_status === 'approved' ? '<span class="text-emerald-700 font-bold text-xs">مقبول</span>' : '<span class="text-amber-600 font-bold text-xs">قيد المراجعة</span>'}</td>
+                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">✅ تم الخصم من الخزنة</span></td>
                     <td class="p-3 ${currentUser.role === 'owner' ? '' : 'hidden'}">
-                        ${f.approval_status === 'pending' ? `<button onclick="approveLoan('${f.id}', '${f.employee_id}', '${f.amount}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs ml-1">موافقة</button>` : ''}
                         <button onclick="deleteRow('employee_financials', '${f.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">حذف</button>
                     </td>
                 </tr>`;
@@ -1432,22 +1105,25 @@
 
             document.getElementById('treasuryTableBody').innerHTML = list.map(t => `
                 <tr>
-                    <td class="p-3.5 font-bold ${t.transaction_type === 'in' ? 'text-emerald-600' : 'text-rose-600'}">${t.transaction_type === 'in' ? '🟢 دخلت الخزنة' : '🔴 اتصرفت'}</td>
+                    <td class="p-3.5 font-bold ${t.transaction_type === 'in' ? 'text-emerald-600' : 'text-rose-600'}">${t.transaction_type === 'in' ? '🟢 دخلت الخزنة' : '🔴 اتصرفت من الخزنة'}</td>
                     <td class="p-3.5 font-extrabold">${Number(t.amount).toLocaleString()} ج.م</td>
                     <td class="p-3.5">${t.description}</td>
                     <td class="p-3.5 text-xs">${new Date(t.transaction_date).toLocaleString('ar-EG')}</td>
-                    <td class="p-3.5"><button onclick="deleteRow('treasury_transactions', '${t.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف</button></td>
+                    <td class="p-3.5 ${currentUser.role === 'owner' ? '' : 'hidden'}">
+                        <button onclick="deleteRow('treasury_transactions', '${t.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
         function renderUsers() {
-            document.getElementById('usersTableBody').innerHTML = state.users.map(u => `
+            const visibleUsers = state.users.filter(u => u.email !== 'treasury@mrc.lock');
+            document.getElementById('usersTableBody').innerHTML = visibleUsers.map(u => `
                 <tr>
                     <td class="p-3 font-bold">${u.full_name}</td>
                     <td class="p-3">${u.email}</td>
                     <td class="p-3">${u.phone}</td>
-                    <td class="p-3 font-bold">${u.role}</td>
+                    <td class="p-3 font-bold">${u.role === 'owner' ? '👑 أونر' : '💼 موظف'}</td>
                     <td class="p-3 text-xs">${new Date(u.created_at).toLocaleString('ar-EG')}</td>
                     <td class="p-3">${u.role !== 'owner' ? `<button onclick="deleteRow('app_users', '${u.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف الحساب</button>` : '-'}</td>
                 </tr>
@@ -1463,6 +1139,9 @@
         }
 
         function switchPage(pageId) {
+            if (pageId === 'treasury' && !isTreasuryUnlocked) {
+                return requestTreasuryAccess();
+            }
             ['deals', 'employees', 'treasury', 'users'].forEach(p => {
                 document.getElementById(`page-${p}`).classList.add('hidden');
                 const btn = document.getElementById(`tab-${p}`);
