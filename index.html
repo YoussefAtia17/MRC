@@ -15,31 +15,37 @@
             to { transform: translateY(0); opacity: 1; }
         }
         .toast-animate { animation: slideIn 0.3s ease-out forwards; }
+        /* خلفية معاينة الواتساب */
+        .wa-preview-bg {
+            background-color: #e5ddd5;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
     </style>
 </head>
-<body class="text-slate-800 min-h-screen">
+<body class="text-slate-800 min-h-screen" onclick="handleOutsideClick(event)">
 
-    <!-- حاوية الإشعارات المنبثقة اللحظية (Toast Notifications) -->
+    <!-- حاوية الإشعارات المنبثقة اللحظية -->
     <div id="toastContainer" class="fixed top-16 left-4 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
 
     <!-- ================================================================= -->
-    <!-- شاشة تسجيل الدخول للموظفين والأونر فقط (Sign In Only)              -->
+    <!-- شاشة تسجيل الدخول (بالاسم أو الإيميل)                             -->
     <!-- ================================================================= -->
     <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-slate-900">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5">
             <div class="text-center">
                 <div class="inline-block bg-blue-600 text-white font-extrabold px-4 py-1.5 rounded-xl text-2xl mb-2">MRC</div>
                 <h1 class="font-bold text-xl text-slate-900">تسجيل دخول الإدارة والموظفين</h1>
-                <p class="text-xs text-slate-500 mt-1">نظام داخلي لإدارة الصفقات والموظفين والخزنة</p>
+                <p class="text-xs text-slate-500 mt-1">يمكنك الدخول باستخدام اسم المستخدم (Username) أو البريد الإلكتروني</p>
             </div>
 
             <form id="signinForm" onsubmit="handleSignIn(event)" class="space-y-4 text-sm">
                 <div>
-                    <label class="block font-bold mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="loginEmail" required placeholder="example@mrc.com" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block font-bold mb-1">اسم المستخدم أو البريد الإلكتروني *</label>
+                    <input type="text" id="loginIdentifier" required placeholder="اكتب اسمك أو الإيميل..." class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block font-bold mb-1">كلمة المرور</label>
+                    <label class="block font-bold mb-1">كلمة المرور (Password) *</label>
                     <input type="password" id="loginPassword" required placeholder="••••••" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition">
@@ -65,7 +71,10 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button onclick="loadAllData(true)" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700">🔄 تحديث البيانات</button>
+                    <button onclick="openProfileModal()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 font-bold">
+                        ⚙️ الإعدادات / حسابي
+                    </button>
+                    <button onclick="loadAllData()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700">🔄 تحديث</button>
                     <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-xs font-bold px-3 py-2 rounded-lg">تسجيل خروج</button>
                 </div>
             </div>
@@ -74,7 +83,7 @@
             <div class="bg-slate-800 border-t border-slate-700">
                 <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-2 py-2">
                     <button onclick="switchPage('deals')" id="tab-deals" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        📋 1. الصفقات والعملاء (Deals)
+                        ⌚ 1. الصفقات والعملاء (Deals)
                     </button>
                     <button onclick="switchPage('employees')" id="tab-employees" class="tab-btn text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
                         👥 2. الموظفين والمرتبات والسلف
@@ -83,7 +92,7 @@
                         <span>🔒 3. الخزنة والتقفيل اليومي/الشهري</span>
                     </button>
                     <button onclick="switchPage('users')" id="tab-users" class="tab-btn owner-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        🔐 حسابات الموظفين والنظام
+                        🔐 4. حسابات النظام
                     </button>
                 </div>
             </div>
@@ -97,11 +106,11 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between gap-4 items-center">
                     <div class="relative w-full md:w-2/3">
                         <input type="text" id="dealSearchInput" oninput="handleSearchDeals(this.value)"
-                            placeholder="🔍 ابحث فوراً بجزء من اسم العميل أو أول أرقام من التليفون..."
+                            placeholder="🔍 ابحث بالاسم، رقم التليفون، نوع الساعة (مثل: رولكس)، أو أي كلمة في تفاصيل الديل..."
                             class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <button onclick="openNewDealModal()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow">
-                        + تسجيل عميل / ديل جديد (من الواتساب)
+                        + تسجيل ديل / ساعة جديدة
                     </button>
                 </div>
 
@@ -110,12 +119,12 @@
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700 border-b">
                                 <tr>
-                                    <th class="p-3.5">اسم العميل والتليفون</th>
-                                    <th class="p-3.5">منين (المكان)</th>
-                                    <th class="p-3.5">تفاصيل الـ Deal</th>
-                                    <th class="p-3.5">أنا دفعتله كام / طالب كام</th>
-                                    <th class="p-3.5">المعاد المتفق عليه (Reminder)</th>
-                                    <th class="p-3.5">صورة المنتج</th>
+                                    <th class="p-3.5">العميل والتليفون</th>
+                                    <th class="p-3.5">نوع الساعة والمكان</th>
+                                    <th class="p-3.5">تفاصيل الـ Deal (الوصف)</th>
+                                    <th class="p-3.5">الأسعار (المطلوب / رينج البيع / المدفوع)</th>
+                                    <th class="p-3.5">المعاد والـ Reminder</th>
+                                    <th class="p-3.5">الصورة</th>
                                     <th class="p-3.5">الحالة والموظف</th>
                                     <th class="p-3.5">إجراءات الديل</th>
                                 </tr>
@@ -127,33 +136,37 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 2: الموظفين والمرتبات والسلف                                 -->
+            <!-- PAGE 2: الموظفين والمرتبات والسلف (تفاعلي بالضغط على الكارت)      -->
             <!-- ================================================================= -->
             <section id="page-employees" class="hidden space-y-6">
                 <div class="flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
                     <div>
                         <h2 class="font-bold text-lg">إدارة الموظفين، السلف، والمرتبات</h2>
-                        <p class="text-xs text-slate-500">أي سلفة يسجلها الموظف تُعتمد فوراً وتُخصم تلقائياً من رصيد الخزنة ومن مرتبه الشهري</p>
+                        <p class="text-xs text-blue-600 font-semibold">💡 اضغط على كارت أي موظف لإظهار سجل السلف والبونص الخاص به، واضغط مرة أخرى أو خارج الكارت لإغلاقه</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="openEmpFinancialModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
                             💸 سحب سلفة فورية / إضافة بونص
                         </button>
                         <button onclick="openModal('addEmployeeModal')" class="owner-only bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
-                            + إنشاء حساب موظف جديد (للأونر)
+                            + إنشاء حساب جديد (موظف / أونر)
                         </button>
                     </div>
                 </div>
 
+                <!-- كروت الموظفين -->
                 <div id="employeesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="p-4 border-b bg-slate-50 font-bold text-sm">📅 سجل السلف والبونص بالتاريخ على مدار الشهر</div>
+                <!-- سجل الموظف المختار فقط (يظهر عند الضغط على الكارت ويختفي عند الضغط خارجه) -->
+                <div id="selectedEmployeeHistoryBox" class="hidden bg-white rounded-2xl shadow-lg border-2 border-blue-500 overflow-hidden transition-all" onclick="event.stopPropagation()">
+                    <div class="p-4 border-b bg-blue-50 flex justify-between items-center">
+                        <span id="selectedEmpHistoryTitle" class="font-extrabold text-sm text-blue-900">📅 سجل السلف والبونص الخاص بالموظف</span>
+                        <button onclick="closeEmployeeHistory()" class="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-lg font-bold">إغلاق السجل ✕</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700">
                                 <tr>
-                                    <th class="p-3">اسم الموظف</th>
                                     <th class="p-3">نوع العملية</th>
                                     <th class="p-3">المبلغ</th>
                                     <th class="p-3">البيان / الملاحظات</th>
@@ -169,7 +182,7 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 3: الخزنة والتقفيل اليومي والشهري (محمية بباسورد)             -->
+            <!-- PAGE 3: الخزنة والتقفيل اليومي والشهري                             -->
             <!-- ================================================================= -->
             <section id="page-treasury" class="hidden space-y-6">
                 <div class="bg-slate-900 text-white p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
@@ -177,7 +190,7 @@
                         <span class="text-xl">🔓</span>
                         <div>
                             <h2 class="font-bold text-sm md:text-base">الخزنة مفتوحة الآن</h2>
-                            <p class="text-xs text-slate-400">يتم تسجيل كافة الإيداعات، المصروفات، السلف، والصفقات بالتفصيل والتاريخ</p>
+                            <p class="text-xs text-slate-400">التقفيل اليومي والشهري مضبوط بالتوقيت المحلي ليظهر متطابقاً على جميع الأجهزة</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -199,7 +212,7 @@
                     </div>
 
                     <div class="bg-white p-5 rounded-xl shadow-sm border-r-4 border-emerald-600">
-                        <h3 class="text-xs font-bold text-slate-500 mb-2">🗓️ التقفيل الشهري (على مدار الشهر)</h3>
+                        <h3 class="text-xs font-bold text-slate-500 mb-2">🗓️ التقفيل الشهري (هذا الشهر)</h3>
                         <div class="flex justify-between text-sm mb-1"><span>إجمالي دخل الشهر:</span><span id="monthlyIn" class="font-bold text-emerald-600">0 ج.م</span></div>
                         <div class="flex justify-between text-sm mb-2"><span>إجمالي مصروفات الشهر:</span><span id="monthlyOut" class="font-bold text-rose-600">0 ج.م</span></div>
                         <div class="border-t pt-2 flex justify-between font-extrabold"><span>الرصيد الفعلي بالخزنة:</span><span id="monthlyNet" class="text-emerald-700">0 ج.م</span></div>
@@ -220,8 +233,9 @@
                     <div class="p-4 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50">
                         <span class="font-bold text-sm">📖 دفتر تفصيل حركات الخزنة (التقفيل اليومي والشهري)</span>
                         <select id="treasuryFilter" onchange="renderTreasury()" class="border rounded-lg px-3 py-1.5 text-xs bg-white font-semibold">
-                            <option value="all">كل الحركات (التقفيل الشهري)</option>
+                            <option value="all">كل الحركات (التقفيل العام)</option>
                             <option value="today">حركات النهاردة فقط (التقفيل اليومي)</option>
+                            <option value="month">حركات هذا الشهر (التقفيل الشهري)</option>
                             <option value="in">اللي دخل الخزنة فقط (إيداع)</option>
                             <option value="out">اللي اتصرف فقط (سلف / بونص / صفقات / مصاريف)</option>
                         </select>
@@ -244,16 +258,19 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 4: جدول حسابات الموظفين والنظام (للأونر فقط)                  -->
+            <!-- PAGE 4: جدول حسابات النظام (للأونر فقط)                           -->
             <!-- ================================================================= -->
             <section id="page-users" class="hidden space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="p-4 border-b bg-slate-50 font-bold text-sm">🔐 حسابات الدخول المسجلة في النظام</div>
+                    <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
+                        <span class="font-bold text-sm">🔐 حسابات الدخول المسجلة في النظام (أونر / موظفين)</span>
+                        <button onclick="openModal('addEmployeeModal')" class="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ إضافة حساب جديد</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-sm">
                             <thead class="bg-slate-100 text-slate-700">
                                 <tr>
-                                    <th class="p-3">الاسم</th>
+                                    <th class="p-3">اسم المستخدم (Username)</th>
                                     <th class="p-3">الإيميل</th>
                                     <th class="p-3">التليفون</th>
                                     <th class="p-3">الصلاحية (Role)</th>
@@ -273,12 +290,41 @@
     <!-- النوافذ المنبثقة (Modals)                                          -->
     <!-- ================================================================= -->
 
-    <!-- نافذة إدخال باسورد الخزنة لفتحها -->
+    <!-- نافذة البروفايل وإعدادات الحساب الشخصي (Profile & Settings) -->
+    <div id="profileModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-lg border-b pb-2">⚙️ إعدادات حسابي (Profile & Settings)</h3>
+            <form onsubmit="saveProfileSettings(event)" class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-bold mb-1">الاسم / اسم المستخدم (Username) *</label>
+                    <input type="text" id="profName" required class="w-full border rounded-xl p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">البريد الإلكتروني (اختياري)</label>
+                    <input type="email" id="profEmail" placeholder="يمكن تركه فارغاً والاعتماد على الاسم" class="w-full border rounded-xl p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">رقم التليفون / الواتساب</label>
+                    <input type="text" id="profPhone" class="w-full border rounded-xl p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-blue-700">🔑 كلمة المرور (Password) *</label>
+                    <input type="text" id="profPassword" required class="w-full border-2 border-blue-400 rounded-xl p-2.5 font-bold">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('profileModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-600 text-white font-bold">حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة إدخال باسورد الخزنة -->
     <div id="treasuryPasswordModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-2xl">
             <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl">🔒</div>
             <h3 class="font-bold text-lg text-slate-900">الخزنة محمية بكلمة مرور</h3>
-            <p class="text-xs text-slate-500">أدخل باسورد الخزنة الخاص بالأونر للدخول إلى الحسابات والتقفيل</p>
+            <p class="text-xs text-slate-500">أدخل باسورد الخزنة للدخول إلى الحسابات والتقفيل اليومي والشهري</p>
             <form onsubmit="verifyTreasuryPassword(event)" class="space-y-3">
                 <input type="password" id="treasuryPassInput" required placeholder="أدخل باسورد الخزنة..." class="w-full border-2 border-slate-300 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-600">
                 <div class="flex gap-2 pt-2">
@@ -289,7 +335,7 @@
         </div>
     </div>
 
-    <!-- نافذة تغيير باسورد الخزنة (للأونر فقط) -->
+    <!-- نافذة تغيير باسورد الخزنة -->
     <div id="changeTreasuryPassModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">🔑 تغيير باسورد الخزنة</h3>
@@ -306,67 +352,103 @@
         </div>
     </div>
 
-    <!-- نافذة عرض الصورة المكبرة داخل نفس الصفحة (Image Lightbox Modal) -->
+    <!-- نافذة عرض الصورة المكبرة داخل نفس الصفحة -->
     <div id="imageViewerModal" onclick="closeModal('imageViewerModal')" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-50 p-4 cursor-zoom-out">
         <div class="relative max-w-3xl w-full bg-slate-900 p-3 rounded-2xl shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center text-white pb-2 mb-2 border-b border-slate-700 px-2">
-                <span id="lightboxCaption" class="font-bold text-sm">صورة المنتج المعروض في الديل</span>
+                <span id="lightboxCaption" class="font-bold text-sm">صورة الساعة / الديل</span>
                 <button onclick="closeModal('imageViewerModal')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق ✕</button>
             </div>
             <img id="lightboxImg" src="" alt="صورة الديل" class="max-h-[75vh] w-auto mx-auto rounded-xl object-contain">
         </div>
     </div>
 
-    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (للموظف والأونر) -->
+    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (متاحة للموظف والأونر بالكامل) -->
     <div id="dealModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto">
             <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل بيانات عميل وديل جديد</h3>
-            <form id="dealForm" onsubmit="saveDeal(event)" class="space-y-3 text-sm">
+            <form id="dealForm" onsubmit="saveDeal(event)" class="space-y-3.5 text-sm">
                 <input type="hidden" id="editDealId">
                 <input type="hidden" id="oldAmountPaid" value="0">
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- بيانات العميل -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label class="block font-semibold mb-1">اسم العميل *</label>
-                        <input type="text" id="clientName" required class="w-full border rounded-lg p-2">
+                        <input type="text" id="clientName" required oninput="updateWhatsAppPreview()" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
-                        <label class="block font-semibold mb-1">رقم تليفون العميل (واتساب) *</label>
+                        <label class="block font-semibold mb-1">رقم التليفون (واتساب) *</label>
                         <input type="text" id="clientPhone" required placeholder="010xxxxxxxx" class="w-full border rounded-lg p-2">
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block font-semibold mb-1">العميل منين (المكان)</label>
                         <input type="text" id="clientLocation" class="w-full border rounded-lg p-2">
+                    </div>
+                </div>
+
+                <!-- نوع الساعة السويسرية (قائمة جاهزة + كتابة يدوية) والموظف -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-blue-50/60 p-3 rounded-xl border border-blue-200">
+                    <div>
+                        <label class="block font-bold mb-1 text-blue-900">⌚ نوع الساعة (السويسرية)</label>
+                        <select id="watchBrandSelect" onchange="handleWatchBrandChange(this.value)" class="w-full border rounded-lg p-2 bg-white font-semibold">
+                            <option value="">-- اختر ماركة الساعة --</option>
+                            <option value="Rolex (رولكس)">Rolex (رولكس)</option>
+                            <option value="Patek Philippe (باتيك فيليب)">Patek Philippe (باتيك فيليب)</option>
+                            <option value="Audemars Piguet - AP (أوديمار بيجيه)">Audemars Piguet - AP (أوديمار بيجيه)</option>
+                            <option value="Omega (أوميجا)">Omega (أوميجا)</option>
+                            <option value="Cartier (كارتييه)">Cartier (كارتييه)</option>
+                            <option value="Vacheron Constantin (فاشيرون كونستانتين)">Vacheron Constantin (فاشيرون كونستانتين)</option>
+                            <option value="Richard Mille (ريتشارد ميل)">Richard Mille (ريتشارد ميل)</option>
+                            <option value="Breitling (بريتلينج)">Breitling (بريتلينج)</option>
+                            <option value="Hublot (هوبلو)">Hublot (هوبلو)</option>
+                            <option value="IWC Schaffhausen">IWC Schaffhausen</option>
+                            <option value="TAG Heuer (تاج هوير)">TAG Heuer (تاج هوير)</option>
+                            <option value="Jaeger-LeCoultre">Jaeger-LeCoultre</option>
+                            <option value="Panerai (بانيراي)">Panerai (بانيراي)</option>
+                            <option value="Tudor (تيودور)">Tudor (تيودور)</option>
+                            <option value="Longines (لونجين)">Longines (لونجين)</option>
+                            <option value="Tissot (تيسو)">Tissot (تيسو)</option>
+                            <option value="Hamilton (هاميلتون)">Hamilton (هاميلتون)</option>
+                            <option value="Rado (رادو)">Rado (رادو)</option>
+                            <option value="custom">➕ نوع آخر (اكتبه يدوياً)...</option>
+                        </select>
+                        <input type="text" id="watchBrandCustom" oninput="updateWhatsAppPreview()" placeholder="اكتب نوع الساعة وموديلها يدوياً هنا..." class="hidden mt-2 w-full border-2 border-blue-500 rounded-lg p-2 bg-white font-bold">
                     </div>
                     <div>
                         <label class="block font-semibold mb-1">الموظف المسؤول عن الديل</label>
                         <select id="dealEmployee" class="w-full border rounded-lg p-2 bg-white"></select>
                     </div>
                 </div>
+
+                <!-- تفاصيل الديل -->
                 <div>
-                    <label class="block font-semibold mb-1">تفاصيل الـ Deal اللي حصل ما بينا *</label>
-                    <textarea id="dealDetails" required rows="2" class="w-full border rounded-lg p-2"></textarea>
+                    <label class="block font-semibold mb-1">تفاصيل الـ Deal اللي حصل ما بينا (الوصف - متاح في البحث) *</label>
+                    <textarea id="dealDetails" required rows="2" placeholder="مثال: عايز يبيع ساعة رولكس ديت جاست حالة زيرو بالبوكس والضمان..." class="w-full border rounded-lg p-2"></textarea>
                 </div>
 
-                <!-- قسم الأسعار المربوط تلقائياً بحالة الديل -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border">
-                    <div>
-                        <label class="block font-bold mb-1 text-emerald-700">💵 أنا دفعتله كام (ج.م)</label>
-                        <input type="number" id="amountPaid" value="0" min="0" oninput="onAmountPaidChange(this.value)" class="w-full border border-emerald-400 rounded-lg p-2 font-bold bg-white">
-                        <span class="text-[11px] text-emerald-700 font-semibold">عند كتابة مبلغ، يتحول الديل تلقائياً لـ (تم الشراء Done)</span>
-                    </div>
+                <!-- قسم الأسعار (متاح للموظف والأونر) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border">
                     <div>
                         <label class="block font-bold mb-1 text-rose-700">🏷️ العميل طالب كام (ج.م)</label>
                         <input type="number" id="amountRequested" value="0" min="0" class="w-full border rounded-lg p-2 font-bold bg-white">
                     </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-indigo-700">📊 سعر البيع (رينج سعر الساعة)</label>
+                        <input type="text" id="sellingPriceRange" placeholder="مثال: 45,000 - 50,000" class="w-full border border-indigo-300 rounded-lg p-2 font-bold bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-emerald-700">💵 أنا دفعتله كام (ج.م)</label>
+                        <input type="number" id="amountPaid" value="0" min="0" oninput="onAmountPaidChange(this.value)" class="w-full border border-emerald-400 rounded-lg p-2 font-bold bg-white">
+                        <span class="text-[10px] text-emerald-700 font-semibold">يقفل الديل Done تلقائياً ويخصم من الخزنة</span>
+                    </div>
                 </div>
 
+                <!-- المعاد وحالة الديل (متاح للموظف والأونر) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-semibold mb-1">المعاد المتفق عليه للتواصل أو المقابلة</label>
-                        <input type="datetime-local" id="meetingTime" class="w-full border rounded-lg p-2">
+                        <label class="block font-semibold mb-1">⏰ المعاد المتفق عليه للتواصل أو المقابلة</label>
+                        <input type="datetime-local" id="meetingTime" oninput="updateWhatsAppPreview()" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
                         <label class="block font-bold mb-1 text-blue-700">حالة الديل</label>
@@ -378,8 +460,26 @@
                     </div>
                 </div>
 
+                <!-- رسالة الـ Reminder ومعاينة حية لشكلها على الواتساب -->
+                <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block font-bold text-emerald-900">💬 رسالة التذكير للعميل (WhatsApp Reminder Message)</label>
+                        <button type="button" onclick="fillDefaultReminderText()" class="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold">توليد نص تلقائي</button>
+                    </div>
+                    <textarea id="reminderMessage" rows="2" oninput="updateWhatsAppPreview()" placeholder="اكتب الرسالة التي ستُرسل للعميل في ميعاده..." class="w-full border border-emerald-300 rounded-lg p-2 bg-white"></textarea>
+
+                    <!-- صندوق المعاينة الحية لشكل الرسالة على الواتساب -->
+                    <div class="wa-preview-bg p-3 rounded-xl border border-slate-300">
+                        <div class="text-[10px] text-slate-500 font-bold mb-1">📱 معاينة شكل الرسالة على واتساب العميل (Preview):</div>
+                        <div class="bg-[#dcf8c6] text-slate-900 p-2.5 rounded-xl rounded-tr-none shadow-sm max-w-md text-xs leading-relaxed whitespace-pre-line relative">
+                            <span id="waPreviewText">أهلاً بك، نذكرك بموعدنا بخصوص الساعة...</span>
+                            <div class="text-[9px] text-slate-500 text-left mt-1 font-semibold">12:00 م ✓✓</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block font-semibold mb-1">صورة الحاجة اللي عليها الديل</label>
+                    <label class="block font-semibold mb-1">صورة الساعة / الحاجة اللي عليها الديل</label>
                     <input type="file" accept="image/*" onchange="compressAndPreviewImage(event)" class="w-full text-xs">
                     <img id="imagePreview" class="hidden mt-2 h-24 rounded-lg border object-cover">
                 </div>
@@ -392,34 +492,42 @@
         </div>
     </div>
 
-    <!-- 2. نافذة إنشاء أكونت موظف جديد بواسطة الأونر -->
+    <!-- 2. نافذة إنشاء أكونت جديد (موظف أو أونر) - الباسورد فقط هو الإجباري -->
     <div id="addEmployeeModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب موظف جديد</h3>
+            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب جديد في النظام</h3>
+            <p class="text-xs text-slate-500">جميع الخانات اختيارية ما عدا كلمة المرور (Password) ويمكن الدخول بالاسم أو الإيميل.</p>
             <form onsubmit="ownerCreateEmployee(event)" class="space-y-3 text-sm">
                 <div>
-                    <label class="block font-semibold mb-1">اسم الموظف بالكامل *</label>
-                    <input type="text" id="empName" required class="w-full border rounded-lg p-2">
+                    <label class="block font-bold mb-1 text-blue-800">نوع الحساب / الصلاحية (Role)</label>
+                    <select id="empRole" onchange="toggleSalaryFieldByRole(this.value)" class="w-full border-2 border-blue-400 rounded-lg p-2 bg-white font-bold">
+                        <option value="employee">💼 موظف (Employee)</option>
+                        <option value="owner">👑 أونر / مدير (Owner - Full Admin)</option>
+                    </select>
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">إيميل تسجيل دخول الموظف *</label>
-                    <input type="email" id="empEmail" required placeholder="emp1@mrc.com" class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">الاسم / اسم المستخدم للدخول (Username)</label>
+                    <input type="text" id="empName" placeholder="مثال: ahmed (يُستخدم لتسجيل الدخول)" class="w-full border rounded-lg p-2">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">باسورد حساب الموظف *</label>
-                    <input type="text" id="empPassword" required placeholder="123456" class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">البريد الإلكتروني (اختياري)</label>
+                    <input type="email" id="empEmail" placeholder="اختياري..." class="w-full border rounded-lg p-2">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">رقم واتساب الموظف (لتذكير الـ 24 ساعة) *</label>
-                    <input type="text" id="empPhone" required placeholder="2010xxxxxxxx" class="w-full border rounded-lg p-2">
+                    <label class="block font-bold mb-1 text-rose-700">باسورد الحساب (Password) * [إجباري]</label>
+                    <input type="text" id="empPassword" required placeholder="اكتب الباسورد هنا..." class="w-full border-2 border-rose-400 rounded-lg p-2 font-bold">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">المرتب الأساسي الشهري (ج.م) *</label>
-                    <input type="number" id="empSalary" required class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">رقم واتساب (اختياري - لتذكير الـ 24 ساعة)</label>
+                    <input type="text" id="empPhone" placeholder="اختياري..." class="w-full border rounded-lg p-2">
+                </div>
+                <div id="empSalaryWrapper">
+                    <label class="block font-semibold mb-1">المرتب الأساسي الشهري (اختياري)</label>
+                    <input type="number" id="empSalary" placeholder="0" class="w-full border rounded-lg p-2">
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('addEmployeeModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
-                    <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 text-white font-bold">إنشاء الحساب وحفظ الموظف</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 text-white font-bold">إنشاء الحساب</button>
                 </div>
             </form>
         </div>
@@ -498,7 +606,17 @@
         let currentUser = null;
         let compressedImageDataUrl = "";
         let isTreasuryUnlocked = false;
+        let selectedEmployeeHistoryId = null;
         let state = { employees: [], deals: [], empFinancials: [], treasury: [], users: [] };
+
+        const SWISS_BRANDS = [
+            "Rolex (رولكس)", "Patek Philippe (باتيك فيليب)", "Audemars Piguet - AP (أوديمار بيجيه)",
+            "Omega (أوميجا)", "Cartier (كارتييه)", "Vacheron Constantin (فاشيرون كونستانتين)",
+            "Richard Mille (ريتشارد ميل)", "Breitling (بريتلينج)", "Hublot (هوبلو)",
+            "IWC Schaffhausen", "TAG Heuer (تاج هوير)", "Jaeger-LeCoultre",
+            "Panerai (بانيراي)", "Tudor (تيودور)", "Longines (لونجين)",
+            "Tissot (تيسو)", "Hamilton (هاميلتون)", "Rado (رادو)"
+        ];
 
         window.onload = () => {
             if (db) {
@@ -531,39 +649,45 @@
             const d = state.deals.find(x => x.id === dealId);
             if (!d || !d.item_image_url) return;
             document.getElementById('lightboxImg').src = d.item_image_url;
-            document.getElementById('lightboxCaption').textContent = `صورة ديل العميل: ${d.client_name} (${d.deal_details})`;
+            document.getElementById('lightboxCaption').textContent = `صورة ديل العميل: ${d.client_name} (${d.watch_brand || d.deal_details})`;
             openModal('imageViewerModal');
         }
 
-        // 1. تسجيل الدخول
+        // =========================================================================
+        // 1. تسجيل الدخول بـ Username أو Email
+        // =========================================================================
         async function handleSignIn(e) {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
+            const identifier = document.getElementById('loginIdentifier').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
 
-            if (email === 'treasury@mrc.lock') {
-                return alert("❌ هذا حساب نظام داخلي لحفظ باسورد الخزنة فقط.");
+            if (identifier.toLowerCase() === 'treasury@mrc.lock') {
+                return alert("❌ هذا سجل نظام داخلي لحفظ باسورد الخزنة فقط.");
             }
 
-            const { data, error } = await db
+            const { data: usersList, error } = await db
                 .from('app_users')
                 .select('*')
-                .eq('email', email)
-                .eq('password_hash', pass)
-                .maybeSingle();
+                .eq('password_hash', pass);
 
-            if (error || !data) {
-                alert("❌ البريد الإلكتروني أو كلمة المرور غير صحيحة!");
-                return;
-            }
-            if (data.role === 'user') {
-                alert("⛔ الدخول مخصص للموظفين والأونر فقط.");
-                return;
+            if (error || !usersList) {
+                return alert("❌ خطأ في الاتصال بقاعدة البيانات!");
             }
 
-            currentUser = data;
+            const matchedUser = usersList.find(u =>
+                u.email !== 'treasury@mrc.lock' &&
+                ((u.email && u.email.toLowerCase() === identifier.toLowerCase()) ||
+                 (u.full_name && u.full_name.toLowerCase() === identifier.toLowerCase()))
+            );
+
+            if (!matchedUser) {
+                alert("❌ اسم المستخدم/الإيميل أو كلمة المرور غير صحيحة!");
+                return;
+            }
+
+            currentUser = matchedUser;
             isTreasuryUnlocked = false;
-            sessionStorage.setItem('mrc_user', JSON.stringify(data));
+            sessionStorage.setItem('mrc_user', JSON.stringify(matchedUser));
             launchApp();
         }
 
@@ -571,6 +695,7 @@
             sessionStorage.removeItem('mrc_user');
             currentUser = null;
             isTreasuryUnlocked = false;
+            selectedEmployeeHistoryId = null;
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.remove('hidden');
         }
@@ -609,7 +734,48 @@
         }
 
         // =========================================================================
-        // 2. نظام حماية الخزنة بباسورد
+        // 2. البروفايل وإعدادات الحساب الشخصي (Profile & Settings)
+        // =========================================================================
+        function openProfileModal() {
+            document.getElementById('profName').value = currentUser.full_name || '';
+            document.getElementById('profEmail').value = (currentUser.email && !currentUser.email.endsWith('@mrc.local')) ? currentUser.email : '';
+            document.getElementById('profPhone').value = currentUser.phone || '';
+            document.getElementById('profPassword').value = currentUser.password_hash || '';
+            openModal('profileModal');
+        }
+
+        async function saveProfileSettings(e) {
+            e.preventDefault();
+            const full_name = document.getElementById('profName').value.trim();
+            const rawEmail = document.getElementById('profEmail').value.trim();
+            const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
+            const phone = document.getElementById('profPhone').value.trim() || '';
+            const password_hash = document.getElementById('profPassword').value.trim();
+
+            const { data: updatedUser, error } = await db
+                .from('app_users')
+                .update({ full_name, email, phone, password_hash })
+                .eq('id', currentUser.id)
+                .select()
+                .single();
+
+            if (error) return alert("❌ خطأ أثناء حفظ الإعدادات: " + error.message);
+
+            const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
+            if (myEmp) {
+                await db.from('employees').update({ full_name, phone_whatsapp: phone }).eq('id', myEmp.id);
+            }
+
+            currentUser = updatedUser;
+            sessionStorage.setItem('mrc_user', JSON.stringify(updatedUser));
+            document.getElementById('currentUserName').textContent = updatedUser.full_name;
+            closeModal('profileModal');
+            showToast("✅ تم حفظ بياناتك وكلمة المرور الجديدة في قاعدة البيانات!", "success");
+            await loadAllData();
+        }
+
+        // =========================================================================
+        // 3. نظام حماية الخزنة بباسورد + التوقيت المحلي
         // =========================================================================
         function getSavedTreasuryPassword() {
             const lockRecord = state.users.find(u => u.email === 'treasury@mrc.lock');
@@ -626,8 +792,9 @@
             }
         }
 
-        function verifyTreasuryPassword(e) {
+        async function verifyTreasuryPassword(e) {
             e.preventDefault();
+            await loadAllData();
             const entered = document.getElementById('treasuryPassInput').value.trim();
             const correctPass = getSavedTreasuryPassword();
             const ownerAccount = state.users.find(u => u.role === 'owner');
@@ -637,9 +804,10 @@
                 isTreasuryUnlocked = true;
                 closeModal('treasuryPasswordModal');
                 switchPage('treasury');
+                renderTreasury();
                 showToast("🔓 تم فتح الخزنة بنجاح", "success");
             } else {
-                alert("❌ باسورد الخزنة غير صحيح! لا يمكنك الدخول.");
+                alert("❌ باسورد الخزنة غير صحيح!");
             }
         }
 
@@ -655,17 +823,15 @@
             const existingLock = state.users.find(u => u.email === 'treasury@mrc.lock');
 
             if (existingLock) {
-                const { error } = await db.from('app_users').update({ password_hash: newPass }).eq('id', existingLock.id);
-                if (error) return alert("❌ خطأ أثناء تحديث الباسورد: " + error.message);
+                await db.from('app_users').update({ password_hash: newPass }).eq('id', existingLock.id);
             } else {
-                const { error } = await db.from('app_users').insert([{
+                await db.from('app_users').insert([{
                     full_name: 'قفل الخزنة',
                     email: 'treasury@mrc.lock',
                     phone: '0000',
                     password_hash: newPass,
                     role: 'user'
                 }]);
-                if (error) return alert("❌ خطأ أثناء حفظ الباسورد: " + error.message);
             }
 
             closeModal('changeTreasuryPassModal');
@@ -673,9 +839,23 @@
             await loadAllData();
         }
 
-        // =========================================================================
-        // 3. حساب رصيد الخزنة المتاح
-        // =========================================================================
+        function isSameLocalDay(dateString) {
+            if (!dateString) return false;
+            const d = new Date(dateString);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === now.getMonth() &&
+                   d.getDate() === now.getDate();
+        }
+
+        function isSameLocalMonth(dateString) {
+            if (!dateString) return false;
+            const d = new Date(dateString);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === now.getMonth();
+        }
+
         function getCurrentTreasuryBalance() {
             let totalIn = 0, totalOut = 0;
             state.treasury.forEach(t => {
@@ -686,16 +866,58 @@
         }
 
         // =========================================================================
-        // 4. الربط الذكي بين المبلغ المدفوع وحالة الديل + الرجوع للديل الملغي
+        // 4. إدارة الساعات السويسرية، معاينة رسالة الواتساب، وتخليص/تعديل الديل
         // =========================================================================
+        function handleWatchBrandChange(val) {
+            const customInput = document.getElementById('watchBrandCustom');
+            if (val === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+            }
+            updateWhatsAppPreview();
+        }
+
+        function getSelectedWatchBrand() {
+            const sel = document.getElementById('watchBrandSelect').value;
+            if (sel === 'custom') {
+                return document.getElementById('watchBrandCustom').value.trim();
+            }
+            return sel;
+        }
+
+        function fillDefaultReminderText() {
+            const client = document.getElementById('clientName').value.trim() || 'عميلنا العزيز';
+            const brand = getSelectedWatchBrand() || 'الساعة المعروضة';
+            const mt = document.getElementById('meetingTime').value;
+            const timeFormatted = mt ? new Date(mt).toLocaleString('ar-EG') : 'الموعد المتفق عليه';
+            const msg = `أهلاً بك أستاذ ${client} 👋\nنذكركم بموعدنا في (MRC) بخصوص (${brand}) في تمام: ${timeFormatted}.\nفي انتظاركم، وشكراً لتعاملكم معنا! ⌚`;
+            document.getElementById('reminderMessage').value = msg;
+            updateWhatsAppPreview();
+        }
+
+        function updateWhatsAppPreview() {
+            const customMsg = document.getElementById('reminderMessage').value.trim();
+            if (customMsg) {
+                document.getElementById('waPreviewText').textContent = customMsg;
+            } else {
+                const client = document.getElementById('clientName').value.trim() || 'العميل';
+                const brand = getSelectedWatchBrand() || 'الساعة';
+                const mt = document.getElementById('meetingTime').value;
+                const timeFormatted = mt ? new Date(mt).toLocaleString('ar-EG') : '(لم يحدد الوقت بعد)';
+                document.getElementById('waPreviewText').textContent = `أهلاً بك أستاذ ${client} 👋\nتذكير بموعدنا بخصوص (${brand}) في الموعد: ${timeFormatted}`;
+            }
+        }
+
+        // متاحة للموظف والأونر: كتابة مبلغ يحول الديل لـ Done تلقائياً
         function onAmountPaidChange(val) {
             const paid = Number(val || 0);
             const statusSelect = document.getElementById('dealStatus');
             if (paid > 0) {
-                // طالما كتب مبلغ مدفوع، يتحول تلقائياً إلى تم الشراء (Done)
                 statusSelect.value = 'completed';
             } else if (statusSelect.value === 'completed') {
-                // لو رجع المبلغ لصفر، يرجع الديل لحالة لسه مخلصش
                 statusSelect.value = 'in_progress';
             }
         }
@@ -703,36 +925,27 @@
         function onDealStatusChange(status) {
             const paidInput = document.getElementById('amountPaid');
             if (status === 'cancelled') {
-                // لو لم يتم الاتفاق، نصفر المبلغ المدفوع ونقفله
                 paidInput.value = 0;
                 paidInput.disabled = true;
             } else if (status === 'in_progress') {
-                // لو اختار إنه لسه لم يتم الشراء، نصفر خانة المدفوع عشان ميبقاش دافع ولسه مخلصش
                 paidInput.value = 0;
                 paidInput.disabled = false;
             } else if (status === 'completed') {
                 paidInput.disabled = false;
-                if (Number(paidInput.value) <= 0) {
-                    paidInput.focus();
-                }
+                if (Number(paidInput.value) <= 0) paidInput.focus();
             }
         }
 
-        // دالة الرجوع للديل مرة أخرى بعد ما كان "لم يتم الاتفاق"
+        // متاحة للموظف والأونر للرجوع للديل الملغي
         async function reopenCancelledDeal(dealId) {
             const d = state.deals.find(x => x.id === dealId);
             if (!d) return;
 
-            const { error } = await db.from('deals').update({
-                status: 'in_progress',
-                owner_note: `🔄 تم إعادة فتح الديل والرجوع للتفاوض بواسطة (${currentUser.full_name})`
-            }).eq('id', dealId);
+            const { error } = await db.from('deals').update({ status: 'in_progress' }).eq('id', dealId);
+            if (error) return alert("❌ خطأ: " + error.message);
 
-            if (error) return alert("❌ خطأ أثناء إعادة فتح الديل: " + error.message);
-
-            showToast(`🔄 تم الرجوع لديل العميل (${d.client_name}) وفتحه للتفاوض من جديد!`, "info");
+            showToast(`🔄 تم الرجوع لديل العميل (${d.client_name}) وفتحه من جديد!`, "info");
             await loadAllData();
-            // يفتح نافذة الديل مباشرة عشان لو حبوا يخلصوه فوراً
             openEditDeal(dealId);
         }
 
@@ -742,13 +955,15 @@
             document.getElementById('oldAmountPaid').value = "0";
             document.getElementById('amountPaid').disabled = false;
             document.getElementById('dealStatus').value = 'in_progress';
-            document.getElementById('dealModalTitle').textContent = "تسجيل بيانات عميل وديل جديد";
+            document.getElementById('watchBrandCustom').classList.add('hidden');
+            document.getElementById('dealModalTitle').textContent = "تسجيل ديل / ساعة جديدة";
             document.getElementById('imagePreview').classList.add('hidden');
             compressedImageDataUrl = "";
 
             const myEmp = state.employees.find(e => e.user_id === currentUser.id);
             if (myEmp) document.getElementById('dealEmployee').value = myEmp.id;
 
+            updateWhatsAppPreview();
             openModal('dealModal');
         }
 
@@ -764,14 +979,27 @@
             document.getElementById('clientPhone').value = d.client_phone || '';
             document.getElementById('clientLocation').value = d.client_location || '';
 
+            const savedBrand = d.watch_brand || '';
+            if (!savedBrand || SWISS_BRANDS.includes(savedBrand)) {
+                document.getElementById('watchBrandSelect').value = savedBrand;
+                document.getElementById('watchBrandCustom').classList.add('hidden');
+                document.getElementById('watchBrandCustom').value = '';
+            } else {
+                document.getElementById('watchBrandSelect').value = 'custom';
+                document.getElementById('watchBrandCustom').classList.remove('hidden');
+                document.getElementById('watchBrandCustom').value = savedBrand;
+            }
+
             const myEmp = state.employees.find(e => e.user_id === currentUser.id);
             document.getElementById('dealEmployee').value = d.employee_id || (myEmp ? myEmp.id : '');
 
             document.getElementById('dealDetails').value = d.deal_details || '';
-            document.getElementById('amountPaid').value = d.amount_paid || 0;
             document.getElementById('amountRequested').value = d.amount_requested || 0;
+            document.getElementById('sellingPriceRange').value = d.selling_price_range || '';
+            document.getElementById('amountPaid').value = d.amount_paid || 0;
             document.getElementById('dealStatus').value = d.status || 'in_progress';
             document.getElementById('amountPaid').disabled = (d.status === 'cancelled');
+            document.getElementById('reminderMessage').value = d.reminder_message || '';
 
             if (d.meeting_time) {
                 const dt = new Date(d.meeting_time);
@@ -791,6 +1019,7 @@
                 document.getElementById('imagePreview').classList.add('hidden');
             }
 
+            updateWhatsAppPreview();
             openModal('dealModal');
         }
 
@@ -801,45 +1030,44 @@
             let newPaid = Number(document.getElementById('amountPaid').value || 0);
             let status = document.getElementById('dealStatus').value;
 
-            // 1. قاعدة إجبارية: طالما دفعت فلوس (> 0) يبقى لازم الحالة تكون تم الشراء (completed)
+            // الموظف والأونر كلاهما يطبق عليهما منطق إتمام الديل
             if (newPaid > 0 && status === 'in_progress') {
                 status = 'completed';
                 document.getElementById('dealStatus').value = 'completed';
             }
-
-            // 2. قاعدة إجبارية: لو اختار تم الشراء (completed) لازم يكون كتب هو دفع للعميل كام
             if (status === 'completed' && newPaid <= 0) {
                 document.getElementById('amountPaid').focus();
-                return alert("⚠️️ طالما اخترت (تم الشراء وتخليص الديل)، لازم تكتب في خانة (أنا دفعتله كام) المبلغ اللي اشتريت بيه!");
+                return alert("⚠️ طالما اخترت (تم الشراء وتخليص الديل)، لازم تكتب في خانة (أنا دفعتله كام) المبلغ اللي اشتريت بيه!");
             }
-
-            // 3. لو اختار لم يتم الاتفاق (cancelled)، المبلغ المدفوع يكون صفر
             if (status === 'cancelled') {
                 newPaid = 0;
             }
 
             const diffPaid = newPaid - oldPaid;
 
-            // التحقق من رصيد الخزنة إذا تم دفع مبلغ للعميل
             if (diffPaid > 0) {
                 const currentBalance = getCurrentTreasuryBalance();
                 if (currentBalance < diffPaid) {
-                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المدفوع في الديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان يتسجل الخصم في الحسابات.`);
+                    return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المدفوع في الديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
                 }
             }
 
             const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
             const selectedEmpId = document.getElementById('dealEmployee').value || (myEmp ? myEmp.id : null);
+            const watchBrand = getSelectedWatchBrand();
 
             const dealPayload = {
                 employee_id: selectedEmpId,
                 client_name: document.getElementById('clientName').value.trim(),
                 client_phone: document.getElementById('clientPhone').value.trim(),
                 client_location: document.getElementById('clientLocation').value.trim(),
+                watch_brand: watchBrand || null,
                 deal_details: document.getElementById('dealDetails').value.trim(),
                 amount_paid: newPaid,
                 amount_requested: Number(document.getElementById('amountRequested').value || 0),
+                selling_price_range: document.getElementById('sellingPriceRange').value.trim() || null,
                 meeting_time: document.getElementById('meetingTime').value || null,
+                reminder_message: document.getElementById('reminderMessage').value.trim() || null,
                 item_image_url: compressedImageDataUrl || null,
                 status: status
             };
@@ -855,24 +1083,16 @@
                 savedDealId = insertedDeal.id;
             }
 
-            // خصم المبلغ المدفوع من الخزنة تلقائياً وتسجيله بالتفصيل
             if (diffPaid > 0) {
                 await db.from('treasury_transactions').insert([{
                     transaction_type: 'out',
                     amount: diffPaid,
-                    description: `مدفوعات شراء وتخليص ديل العميل: ${dealPayload.client_name} (${dealPayload.deal_details}) - بواسطة: ${currentUser.full_name}`,
+                    description: `شراء وتخليص ديل (${watchBrand || 'ساعة'} - العميل: ${dealPayload.client_name}) - بواسطة: ${currentUser.full_name}`,
                     related_deal_id: savedDealId
                 }]);
             }
 
-            if (status === 'completed') {
-                showToast(`✅ تم تقفيل الديل (Done) وخصم ${diffPaid > 0 ? diffPaid.toLocaleString() + ' ج.م من الخزنة' : ''}!`, "success");
-            } else if (status === 'cancelled') {
-                showToast(`❌ تم تعليم الديل كـ (لم يتم الاتفاق) مع إمكانية الرجوع إليه لاحقاً.`, "warning");
-            } else {
-                showToast("تم حفظ بيانات الديل بنجاح!", "info");
-            }
-
+            showToast("✅ تم حفظ وتحديث بيانات الديل بنجاح!", "success");
             compressedImageDataUrl = "";
             document.getElementById('dealForm').reset();
             document.getElementById('imagePreview').classList.add('hidden');
@@ -881,8 +1101,71 @@
         }
 
         // =========================================================================
-        // 5. السلف الفورية والبونص
+        // 5. إنشاء حساب (موظف / أونر) + تفاعل كروت الموظفين
         // =========================================================================
+        function toggleSalaryFieldByRole(role) {
+            document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
+        }
+
+        async function ownerCreateEmployee(e) {
+            e.preventDefault();
+            const role = document.getElementById('empRole').value;
+            const password_hash = document.getElementById('empPassword').value.trim();
+            if (!password_hash) return alert("⚠️ كلمة المرور (Password) مطلوبة!");
+
+            const rawName = document.getElementById('empName').value.trim();
+            const full_name = rawName || (role === 'owner' ? `أونر_${Date.now().toString().slice(-3)}` : `موظف_${Date.now().toString().slice(-3)}`);
+            const rawEmail = document.getElementById('empEmail').value.trim();
+            const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
+            const phone_whatsapp = document.getElementById('empPhone').value.trim() || '';
+            const base_salary = Number(document.getElementById('empSalary').value || 0);
+
+            const { data: userAcc, error: userErr } = await db
+                .from('app_users')
+                .insert([{ full_name, email, phone: phone_whatsapp, password_hash, role }])
+                .select()
+                .single();
+
+            if (userErr) return alert("❌ خطأ في إنشاء الحساب: " + userErr.message);
+
+            if (role === 'employee') {
+                const { error: empErr } = await db
+                    .from('employees')
+                    .insert([{ user_id: userAcc.id, full_name, phone_whatsapp, base_salary }]);
+                if (empErr) return alert("❌ خطأ في حفظ سجل الموظف: " + empErr.message);
+            }
+
+            showToast(`✅ تم إنشاء حساب (${full_name}) بصلاحية (${role === 'owner' ? 'أونر' : 'موظف'})! يمكنه الدخول باسمه الآن.`, 'success');
+            e.target.reset();
+            closeModal('addEmployeeModal');
+            await loadAllData();
+        }
+
+        function toggleEmployeeCardHistory(empId, event) {
+            if (event) event.stopPropagation();
+            if (selectedEmployeeHistoryId === empId) {
+                closeEmployeeHistory();
+            } else {
+                selectedEmployeeHistoryId = empId;
+                renderEmployees();
+            }
+        }
+
+        function closeEmployeeHistory() {
+            selectedEmployeeHistoryId = null;
+            document.getElementById('selectedEmployeeHistoryBox').classList.add('hidden');
+            renderEmployees();
+        }
+
+        function handleOutsideClick(event) {
+            if (!selectedEmployeeHistoryId) return;
+            const clickedInsideCard = event.target.closest('.emp-card-item');
+            const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
+            if (!clickedInsideCard && !clickedInsideHistory) {
+                closeEmployeeHistory();
+            }
+        }
+
         function openEmpFinancialModal() {
             const myEmp = state.employees.find(e => e.user_id === currentUser.id);
             const empSelect = document.getElementById('finEmpId');
@@ -907,7 +1190,7 @@
             const typeLabel = transaction_type === 'loan' ? 'السلفة' : 'البونص';
 
             if (currentBalance < amount) {
-                return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول عشان الكلام ده يتسجل في الخزنة والتقفيل.`);
+                return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
             }
 
             const { data: finData, error } = await db
@@ -935,42 +1218,13 @@
                 related_emp_financial_id: finData.id
             }]);
 
+            selectedEmployeeHistoryId = employee_id;
             showToast(`تم تسجيل ${typeLabel} بمبلغ ${amount.toLocaleString()} ج.م وخصمها من الخزنة فوراً!`, "success");
             e.target.reset();
             closeModal('empFinancialModal');
             await loadAllData();
         }
 
-        // 6. إنشاء حساب موظف جديد بواسطة الأونر
-        async function ownerCreateEmployee(e) {
-            e.preventDefault();
-            const full_name = document.getElementById('empName').value.trim();
-            const email = document.getElementById('empEmail').value.trim();
-            const password_hash = document.getElementById('empPassword').value.trim();
-            const phone_whatsapp = document.getElementById('empPhone').value.trim();
-            const base_salary = Number(document.getElementById('empSalary').value);
-
-            const { data: userAcc, error: userErr } = await db
-                .from('app_users')
-                .insert([{ full_name, email, phone: phone_whatsapp, password_hash, role: 'employee' }])
-                .select()
-                .single();
-
-            if (userErr) return alert("❌ خطأ في إنشاء حساب الموظف: " + userErr.message);
-
-            const { error: empErr } = await db
-                .from('employees')
-                .insert([{ user_id: userAcc.id, full_name, phone_whatsapp, base_salary }]);
-
-            if (empErr) return alert("❌ خطأ في حفظ بيانات الموظف: " + empErr.message);
-
-            showToast(`تم إنشاء حساب الموظف (${full_name}) بنجاح!`, 'success');
-            e.target.reset();
-            closeModal('addEmployeeModal');
-            await loadAllData();
-        }
-
-        // 7. إضافة حركة خزنة يدوية
         async function saveTreasuryTransaction(e) {
             e.preventDefault();
             const type = document.getElementById('trType').value;
@@ -1005,7 +1259,7 @@
         let searchTimer;
         function handleSearchDeals(q) {
             clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => renderDeals(q.trim()), 150);
+            searchTimer = setTimeout(() => renderDeals(q.trim()), 120);
         }
 
         function compressAndPreviewImage(event) {
@@ -1039,14 +1293,18 @@
             let list = state.deals;
 
             if (query) {
+                const qLower = query.toLowerCase();
                 list = list.filter(d =>
-                    (d.client_name && d.client_name.includes(query)) ||
-                    (d.client_phone && d.client_phone.includes(query))
+                    (d.client_name && d.client_name.toLowerCase().includes(qLower)) ||
+                    (d.client_phone && d.client_phone.toLowerCase().includes(qLower)) ||
+                    (d.deal_details && d.deal_details.toLowerCase().includes(qLower)) ||
+                    (d.watch_brand && d.watch_brand.toLowerCase().includes(qLower)) ||
+                    (d.client_location && d.client_location.toLowerCase().includes(qLower))
                 );
             }
 
             if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">لا توجد صفقات مسجلة حالياً</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">لا توجد صفقات مطابقة للبحث</td></tr>`;
                 return;
             }
 
@@ -1057,41 +1315,35 @@
                 let actionButtons = '';
 
                 if (d.status === 'completed') {
-                    // الديل خلص وتم الشراء (Done)
                     rowBgClass = 'bg-emerald-50/50 hover:bg-emerald-50';
                     badge = `<span class="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">✅ تم الشراء (Done)</span>`;
                     actionButtons = `
                         <div class="flex flex-col gap-1.5 items-start">
-                            <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300 w-full text-center">
+                            <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
                                 ✔️ الديل منتهي (Done)
                             </span>
-                            ${currentUser.role === 'owner' ? `
-                                <div class="flex gap-2 w-full pt-1">
-                                    <button onclick="openEditDeal('${d.id}')" class="text-[11px] text-slate-600 hover:underline font-bold">تعديل</button>
-                                    <button onclick="deleteRow('deals', '${d.id}')" class="text-[11px] text-rose-600 hover:underline font-bold">حذف</button>
-                                </div>
-                            ` : ''}
+                            <button onclick="openEditDeal('${d.id}')" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold">✏️ تعديل الديل</button>
+                            <button onclick="deleteRow('deals', '${d.id}')" class="w-full text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 } else if (d.status === 'cancelled') {
-                    // الديل مكملش (لم يتم الاتفاق) + زرار الرجوع للديل تاني
                     rowBgClass = 'bg-rose-50/40 hover:bg-rose-50/70';
-                    badge = `<span class="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق (الديل مكملش)</span>`;
+                    badge = `<span class="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق</span>`;
                     actionButtons = `
                         <div class="flex flex-col gap-1.5">
-                            <button onclick="reopenCancelledDeal('${d.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold shadow transition">
+                            <button onclick="reopenCancelledDeal('${d.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
                                 🔄 الرجوع للديل مرة أخرى
                             </button>
-                            ${currentUser.role === 'owner' ? `<button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>` : ''}
+                            <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold">✏️ تعديل البيانات</button>
+                            <button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 } else {
-                    // الديل لسه مفتوح وقيد التفاوض
-                    badge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل (لسه مخلصش)</span>`;
+                    badge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;
                     actionButtons = `
                         <div class="flex flex-col gap-1.5">
                             <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
                                 ✏️ تخليص / تعديل الديل
                             </button>
-                            ${currentUser.role === 'owner' ? `<button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>` : ''}
+                            <button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 }
 
@@ -1108,17 +1360,24 @@
                         <div class="font-bold text-slate-900">${d.client_name}</div>
                         <a href="https://wa.me/2${d.client_phone}" target="_blank" class="text-xs text-emerald-600 font-bold hover:underline">📱 ${d.client_phone}</a>
                     </td>
-                    <td class="p-3.5">${d.client_location || '-'}</td>
-                    <td class="p-3.5 max-w-xs font-medium">${d.deal_details}</td>
                     <td class="p-3.5">
-                        <div class="text-xs text-emerald-700 font-bold">دفعتله: ${Number(d.amount_paid).toLocaleString()} ج.م</div>
-                        <div class="text-xs text-rose-600 font-bold">طالب: ${Number(d.amount_requested).toLocaleString()} ج.م</div>
+                        <div class="font-extrabold text-blue-800">${d.watch_brand ? '⌚ ' + d.watch_brand : '-'}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">📍 ${d.client_location || 'غير محدد'}</div>
                     </td>
-                    <td class="p-3.5 text-xs font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</td>
+                    <td class="p-3.5 max-w-xs font-medium">${d.deal_details}</td>
+                    <td class="p-3.5 space-y-0.5">
+                        <div class="text-xs text-rose-600 font-bold">العميل طالب: ${Number(d.amount_requested || 0).toLocaleString()} ج.م</div>
+                        <div class="text-xs text-indigo-700 font-bold">رينج البيع: ${d.selling_price_range || 'غير محدد'}</div>
+                        <div class="text-xs text-emerald-700 font-bold">دفعتله: ${Number(d.amount_paid || 0).toLocaleString()} ج.م</div>
+                    </td>
+                    <td class="p-3.5 text-xs">
+                        <div class="font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</div>
+                        ${d.reminder_message ? `<div class="mt-1 text-[10px] bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200 max-w-[180px] truncate" title="${d.reminder_message}">💬 ${d.reminder_message}</div>` : ''}
+                    </td>
                     <td class="p-3.5">${imageHtml}</td>
                     <td class="p-3.5">
                         ${badge}
-                        <div class="text-xs text-slate-500 mt-1">${emp ? '👤 الموظف: ' + emp.full_name : '<span class="text-amber-600">بدون موظف</span>'}</div>
+                        <div class="text-xs text-slate-500 mt-1">${emp ? '👤 ' + emp.full_name : '<span class="text-amber-600">بدون موظف</span>'}</div>
                     </td>
                     <td class="p-3.5">${actionButtons}</td>
                 </tr>`;
@@ -1135,15 +1394,22 @@
                 const loans = recs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
                 const bonus = recs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
                 const net = Number(emp.base_salary) + bonus - loans;
+                const isSelected = selectedEmployeeHistoryId === emp.id;
 
                 return `
-                <div class="bg-white p-5 rounded-xl shadow-sm border">
+                <div onclick="toggleEmployeeCardHistory('${emp.id}', event)"
+                     class="emp-card-item cursor-pointer bg-white p-5 rounded-xl shadow-sm border-2 transition ${isSelected ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50/20' : 'border-slate-200 hover:border-blue-400'}">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-bold text-base">${emp.full_name}</h3>
-                            <p class="text-xs text-slate-500">واتساب: ${emp.phone_whatsapp}</p>
+                            <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
+                                <span>👤 ${emp.full_name}</span>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
+                                    ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (${recs.length})'}
+                                </span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">واتساب: ${emp.phone_whatsapp || 'غير مسجل'}</p>
                         </div>
-                        ${currentUser.role === 'owner' ? `<button onclick="deleteRow('employees', '${emp.id}')" class="text-xs text-rose-600 font-bold">حذف</button>` : ''}
+                        ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteRow('employees', '${emp.id}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
                     </div>
                     <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-lg">
                         <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${Number(emp.base_salary).toLocaleString()} ج.م</b></div>
@@ -1154,55 +1420,83 @@
                 </div>`;
             }).join('');
 
-            document.getElementById('empFinancialsTableBody').innerHTML = state.empFinancials.map(f => {
-                const emp = state.employees.find(e => e.id === f.employee_id);
-                return `
-                <tr>
-                    <td class="p-3 font-bold">${emp ? emp.full_name : '-'}</td>
-                    <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
-                    <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
-                    <td class="p-3">${f.notes || '-'}</td>
-                    <td class="p-3 text-xs">${new Date(f.transaction_date).toLocaleString('ar-EG')}</td>
-                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">✅ تم الخصم من الخزنة</span></td>
-                    <td class="p-3 ${currentUser.role === 'owner' ? '' : 'hidden'}">
-                        <button onclick="deleteRow('employee_financials', '${f.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">حذف</button>
-                    </td>
-                </tr>`;
-            }).join('');
+            const historyBox = document.getElementById('selectedEmployeeHistoryBox');
+            if (selectedEmployeeHistoryId) {
+                const selectedEmp = state.employees.find(e => e.id === selectedEmployeeHistoryId);
+                if (selectedEmp) {
+                    historyBox.classList.remove('hidden');
+                    document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بالموظف: (${selectedEmp.full_name})`;
+                    const empRecs = state.empFinancials.filter(f => f.employee_id === selectedEmployeeHistoryId);
+
+                    if (empRecs.length === 0) {
+                        document.getElementById('empFinancialsTableBody').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-slate-400">لا توجد سلف أو مكافآت مسجلة لهذا الموظف</td></tr>`;
+                    } else {
+                        document.getElementById('empFinancialsTableBody').innerHTML = empRecs.map(f => `
+                            <tr>
+                                <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
+                                <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
+                                <td class="p-3">${f.notes || '-'}</td>
+                                <td class="p-3 text-xs">${new Date(f.transaction_date).toLocaleString('ar-EG')}</td>
+                                <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">✅ تم الخصم من الخزنة</span></td>
+                                <td class="p-3 ${currentUser.role === 'owner' ? '' : 'hidden'}">
+                                    <button onclick="deleteRow('employee_financials', '${f.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">حذف</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } else {
+                historyBox.classList.add('hidden');
+            }
         }
 
         function renderTreasury() {
             const filter = document.getElementById('treasuryFilter').value;
-            const todayStr = new Date().toISOString().split('T')[0];
             let dIn = 0, dOut = 0, mIn = 0, mOut = 0;
 
             state.treasury.forEach(t => {
-                const amt = Number(t.amount);
-                const isToday = t.transaction_date && t.transaction_date.startsWith(todayStr);
-                if (t.transaction_type === 'in') { mIn += amt; if (isToday) dIn += amt; }
-                else { mOut += amt; if (isToday) dOut += amt; }
+                const amt = Number(t.amount || 0);
+                const tDate = t.transaction_date || t.created_at;
+                const isToday = isSameLocalDay(tDate);
+                const isMonth = isSameLocalMonth(tDate);
+
+                if (t.transaction_type === 'in') {
+                    if (isMonth) mIn += amt;
+                    if (isToday) dIn += amt;
+                } else {
+                    if (isMonth) mOut += amt;
+                    if (isToday) dOut += amt;
+                }
             });
 
             document.getElementById('dailyIn').textContent = dIn.toLocaleString() + ' ج.م';
             document.getElementById('dailyOut').textContent = dOut.toLocaleString() + ' ج.م';
             document.getElementById('dailyNet').textContent = (dIn - dOut).toLocaleString() + ' ج.م';
+
             document.getElementById('monthlyIn').textContent = mIn.toLocaleString() + ' ج.م';
             document.getElementById('monthlyOut').textContent = mOut.toLocaleString() + ' ج.م';
-            document.getElementById('monthlyNet').textContent = (mIn - mOut).toLocaleString() + ' ج.م';
+            document.getElementById('monthlyNet').textContent = getCurrentTreasuryBalance().toLocaleString() + ' ج.م';
 
             const list = state.treasury.filter(t => {
-                if (filter === 'today') return t.transaction_date && t.transaction_date.startsWith(todayStr);
+                const tDate = t.transaction_date || t.created_at;
+                if (filter === 'today') return isSameLocalDay(tDate);
+                if (filter === 'month') return isSameLocalMonth(tDate);
                 if (filter === 'in') return t.transaction_type === 'in';
                 if (filter === 'out') return t.transaction_type === 'out';
                 return true;
             });
+
+            if (list.length === 0) {
+                document.getElementById('treasuryTableBody').innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">لا توجد حركات مسجلة في هذا التصنيف</td></tr>`;
+                return;
+            }
 
             document.getElementById('treasuryTableBody').innerHTML = list.map(t => `
                 <tr>
                     <td class="p-3.5 font-bold ${t.transaction_type === 'in' ? 'text-emerald-600' : 'text-rose-600'}">${t.transaction_type === 'in' ? '🟢 دخلت الخزنة' : '🔴 اتصرفت من الخزنة'}</td>
                     <td class="p-3.5 font-extrabold">${Number(t.amount).toLocaleString()} ج.م</td>
                     <td class="p-3.5">${t.description}</td>
-                    <td class="p-3.5 text-xs">${new Date(t.transaction_date).toLocaleString('ar-EG')}</td>
+                    <td class="p-3.5 text-xs">${new Date(t.transaction_date || t.created_at).toLocaleString('ar-EG')}</td>
                     <td class="p-3.5 ${currentUser.role === 'owner' ? '' : 'hidden'}">
                         <button onclick="deleteRow('treasury_transactions', '${t.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف</button>
                     </td>
@@ -1215,8 +1509,8 @@
             document.getElementById('usersTableBody').innerHTML = visibleUsers.map(u => `
                 <tr>
                     <td class="p-3 font-bold">${u.full_name}</td>
-                    <td class="p-3">${u.email}</td>
-                    <td class="p-3">${u.phone}</td>
+                    <td class="p-3">${u.email && !u.email.endsWith('@mrc.local') ? u.email : '<span class="text-xs text-slate-400">يدخل بالاسم فقط</span>'}</td>
+                    <td class="p-3">${u.phone || '-'}</td>
                     <td class="p-3 font-bold">${u.role === 'owner' ? '👑 أونر' : '💼 موظف'}</td>
                     <td class="p-3 text-xs">${new Date(u.created_at).toLocaleString('ar-EG')}</td>
                     <td class="p-3">${u.role !== 'owner' ? `<button onclick="deleteRow('app_users', '${u.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف الحساب</button>` : '-'}</td>
