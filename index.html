@@ -260,7 +260,7 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 4: إدارة أرقام واتساب الشركة الـ 10 (محمية بباسورد)          -->
+            <!-- PAGE 4: إدارة أرقام واتساب الشركة + عرض الديلز المربوطة بكل رقم    -->
             <!-- ================================================================= -->
             <section id="page-whatsapp" class="hidden space-y-6">
                 <!-- شريط أمان وقفل صفحة أرقام الواتساب -->
@@ -269,7 +269,7 @@
                         <span class="text-xl">📱</span>
                         <div>
                             <h2 class="font-bold text-sm md:text-base">إدارة أرقام واتساب الشركة مفتوحة الآن</h2>
-                            <p class="text-xs text-slate-400">الأرقام المسجلة هنا تظهر تلقائياً في نافذة الديل لإرسال الـ Reminders للعملاء</p>
+                            <p class="text-xs text-slate-400">اضغط على كارت أي رقم بالأسفل لرؤية الصفقات (Deals) المربوطة به ومن قام بربطها (أونر أو موظف)</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -285,14 +285,38 @@
                 <div class="bg-white p-5 rounded-xl shadow-sm border flex flex-wrap justify-between items-center gap-4">
                     <div>
                         <h3 class="font-bold text-base text-slate-900">خطوط واتساب البيزنس الخاصة بالشركة</h3>
-                        <p class="text-xs text-slate-500 mt-1">أضف أرقام الشركة هنا لتختار منها عند تسجيل الديل أو تترك النظام يوزع الرسائل عليها بالتساوي</p>
+                        <p class="text-xs text-emerald-700 font-semibold mt-1">💡 اضغط على كارت الرقم لعرض سجل الـ Deals المربوطة به، واضغط مرة أخرى أو خارج الكارت لإغلاقه</p>
                     </div>
                     <button onclick="openModal('addWhatsappModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow">
                         + إضافة رقم واتساب للشركة
                     </button>
                 </div>
 
+                <!-- كروت أرقام واتساب الشركة -->
                 <div id="waInstancesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <!-- جدول الصفقات المربوطة برقم الواتساب المختار (يظهر عند الضغط على كارت الرقم) -->
+                <div id="selectedWaDealsBox" class="hidden bg-white rounded-2xl shadow-lg border-2 border-emerald-500 overflow-hidden transition-all" onclick="event.stopPropagation()">
+                    <div class="p-4 border-b bg-emerald-50 flex justify-between items-center">
+                        <span id="selectedWaDealsTitle" class="font-extrabold text-sm text-emerald-900">📱 الصفقات المربوطة بهذا الرقم</span>
+                        <button onclick="closeWaDealsHistory()" class="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-lg font-bold">إغلاق القائمة ✕</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="p-3">العميل والتليفون</th>
+                                    <th class="p-3">نوع الساعة وتفاصيل الديل</th>
+                                    <th class="p-3">مين ربط الرقم بالديل (أونر / موظف)</th>
+                                    <th class="p-3">ميعاد الـ Reminder</th>
+                                    <th class="p-3">حالة الديل</th>
+                                    <th class="p-3">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waLinkedDealsTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <!-- ================================================================= -->
@@ -700,8 +724,9 @@
         let currentUser = null;
         let compressedImageDataUrl = "";
         let isTreasuryUnlocked = false;
-        let isWhatsappUnlocked = false; // حالة قفل صفحة أرقام الواتساب بباسورد
+        let isWhatsappUnlocked = false;
         let selectedEmployeeHistoryId = null;
+        let selectedWaInstanceId = null; // لتتبع كارت رقم الواتساب المفتوح لعرض صفقاته
         let state = { employees: [], deals: [], empFinancials: [], treasury: [], users: [], waInstances: [] };
 
         const SWISS_BRANDS = [
@@ -795,6 +820,7 @@
             isTreasuryUnlocked = false;
             isWhatsappUnlocked = false;
             selectedEmployeeHistoryId = null;
+            selectedWaInstanceId = null;
             document.getElementById('appScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.remove('hidden');
         }
@@ -835,7 +861,7 @@
         }
 
         // =========================================================================
-        // 2. إدارة وحماية صفحة أرقام واتساب الشركة بباسورد
+        // 2. إدارة وحماية صفحة أرقام واتساب الشركة + إظهار الصفقات المربوطة بكل رقم
         // =========================================================================
         function getSavedWhatsappPassword() {
             const lockRecord = state.users.find(u => u.email === 'whatsapp@mrc.lock');
@@ -873,6 +899,7 @@
 
         function lockWhatsappPage() {
             isWhatsappUnlocked = false;
+            selectedWaInstanceId = null;
             switchPage('deals');
             showToast("🔒 تم قفل صفحة أرقام الواتساب", "info");
         }
@@ -912,7 +939,7 @@
             }]);
 
             if (error) {
-                return alert("❌ خطأ في حفظ رقم الشركة (تأكد من تشغيل كود الـ RLS Policy في Supabase): " + error.message);
+                return alert("❌ خطأ في حفظ رقم الشركة: " + error.message);
             }
 
             showToast(`📱 تم إضافة خط واتساب الشركة (${instance_name} - ${phone_number}) وظهوره في قائمة الديل!`, 'success');
@@ -927,8 +954,25 @@
             await loadAllData();
         }
 
+        function toggleWaCardDeals(waId, event) {
+            if (event) event.stopPropagation();
+            if (Number(selectedWaInstanceId) === Number(waId)) {
+                closeWaDealsHistory();
+            } else {
+                selectedWaInstanceId = waId;
+                renderWhatsappInstances();
+            }
+        }
+
+        function closeWaDealsHistory() {
+            selectedWaInstanceId = null;
+            const box = document.getElementById('selectedWaDealsBox');
+            if (box) box.classList.add('hidden');
+            renderWhatsappInstances();
+        }
+
         function renderWhatsappInstances() {
-            // تحديث القائمة المنسدلة داخل نافذة إضافة/تعديل الديل بكل الأرقام المضافة
+            // تحديث القائمة المنسدلة داخل نافذة إضافة/تعديل الديل
             const connectedNumbers = state.waInstances.filter(w => w.status === 'connected');
             let waSelectHtml = `<option value="">🔄 توزيع تلقائي ذكي بين أرقام الشركة (${connectedNumbers.length} متصل)</option>`;
             waSelectHtml += state.waInstances.map(w => `
@@ -950,8 +994,12 @@
 
             grid.innerHTML = state.waInstances.map((w, idx) => {
                 const isConn = w.status === 'connected';
+                const linkedDeals = state.deals.filter(d => Number(d.whatsapp_instance_id) === Number(w.id));
+                const isSelected = Number(selectedWaInstanceId) === Number(w.id);
+
                 return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-2 ${isConn ? 'border-emerald-500/60' : 'border-rose-300 bg-rose-50/20'} flex flex-col justify-between">
+                <div onclick="toggleWaCardDeals(${w.id}, event)"
+                     class="wa-card-item cursor-pointer bg-white p-5 rounded-2xl shadow-sm border-2 transition ${isSelected ? 'border-emerald-600 ring-4 ring-emerald-200 bg-emerald-50/20' : (isConn ? 'border-emerald-500/60 hover:border-emerald-600' : 'border-rose-300 bg-rose-50/20')} flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-start">
                             <span class="bg-slate-900 text-white text-xs font-extrabold px-2.5 py-1 rounded-lg">خط شركة #${idx + 1}</span>
@@ -959,11 +1007,16 @@
                                 ${isConn ? '🟢 متصل (Connected)' : '🔴 فاصل (Disconnected)'}
                             </span>
                         </div>
-                        <h3 class="font-extrabold text-base text-slate-900 mt-3">${w.instance_name}</h3>
+                        <div class="flex justify-between items-center mt-3">
+                            <h3 class="font-extrabold text-base text-slate-900">${w.instance_name}</h3>
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'}">
+                                ${isSelected ? '▼ الصفقات مفتوحة' : '▶ عرض الصفقات (' + linkedDeals.length + ')'}
+                            </span>
+                        </div>
                         <p class="text-sm text-emerald-700 font-bold mt-1">📱 ${w.phone_number}</p>
-                        <p class="text-[11px] text-slate-400 mt-2">آخر استخدام في الإرسال: ${w.last_used_at ? new Date(w.last_used_at).toLocaleString('ar-EG') : 'جاهز للإرسال'}</p>
+                        <p class="text-[11px] text-slate-500 mt-2 font-semibold">📋 عدد الـ Deals المربوطة بالرقم: <b class="text-slate-900">${linkedDeals.length} ديل</b></p>
                     </div>
-                    <div class="flex justify-between items-center gap-2 mt-4 pt-3 border-t">
+                    <div class="flex justify-between items-center gap-2 mt-4 pt-3 border-t" onclick="event.stopPropagation()">
                         <button onclick="toggleWaInstanceStatus(${w.id}, '${w.status}')" class="text-xs font-bold px-3 py-1.5 rounded-lg ${isConn ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}">
                             ${isConn ? 'تعطيل مؤقت' : 'تفعيل كمتصل'}
                         </button>
@@ -973,6 +1026,65 @@
                     </div>
                 </div>`;
             }).join('');
+
+            // عرض جدول الصفقات المربوطة بالرقم المختار وتوضيح مين حطه (أونر أو موظف)
+            const dealsBox = document.getElementById('selectedWaDealsBox');
+            const dealsTbody = document.getElementById('waLinkedDealsTableBody');
+            if (selectedWaInstanceId && dealsBox && dealsTbody) {
+                const selectedWa = state.waInstances.find(w => Number(w.id) === Number(selectedWaInstanceId));
+                if (selectedWa) {
+                    dealsBox.classList.remove('hidden');
+                    document.getElementById('selectedWaDealsTitle').textContent = `📱 الصفقات المربوطة بخط: ${selectedWa.instance_name} (${selectedWa.phone_number})`;
+                    const linkedDeals = state.deals.filter(d => Number(d.whatsapp_instance_id) === Number(selectedWaInstanceId));
+
+                    if (linkedDeals.length === 0) {
+                        dealsTbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد صفقات مربوطة بهذا الرقم حتى الآن</td></tr>`;
+                    } else {
+                        dealsTbody.innerHTML = linkedDeals.map(d => {
+                            const emp = state.employees.find(e => e.id === d.employee_id);
+                            const linkedUser = emp ? state.users.find(u => u.id === emp.user_id) : null;
+
+                            const personName = d.assigned_by_name || (emp ? emp.full_name : 'غير محدد');
+                            const personRole = d.assigned_by_role || (linkedUser ? linkedUser.role : 'employee');
+
+                            const roleBadge = personRole === 'owner'
+                                ? `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold">👑 أونر: ${personName}</span>`
+                                : `<span class="inline-block whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold">💼 موظف: ${personName}</span>`;
+
+                            let statusBadge = `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;
+                            if (d.status === 'completed') statusBadge = `<span class="inline-block whitespace-nowrap bg-emerald-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">✅ تم الشراء (Done)</span>`;
+                            else if (d.status === 'cancelled') statusBadge = `<span class="inline-block whitespace-nowrap bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-xs font-bold">❌ لم يتم الاتفاق</span>`;
+
+                            return `
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-3">
+                                    <div class="font-bold text-slate-900">${d.client_name}</div>
+                                    <div class="text-xs text-emerald-600 font-bold">📱 ${d.client_phone}</div>
+                                </td>
+                                <td class="p-3">
+                                    <div class="font-extrabold text-blue-800 text-xs">${d.watch_brand ? '⌚ ' + d.watch_brand : '-'}</div>
+                                    <div class="text-xs text-slate-600 mt-0.5">${d.deal_details}</div>
+                                </td>
+                                <td class="p-3">
+                                    ${roleBadge}
+                                    ${emp && d.assigned_by_name && emp.full_name !== d.assigned_by_name ? `<div class="text-[10px] text-slate-500 mt-1">مسؤول الديل: ${emp.full_name}</div>` : ''}
+                                </td>
+                                <td class="p-3 text-xs font-semibold text-blue-700">
+                                    ${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}
+                                </td>
+                                <td class="p-3">${statusBadge}</td>
+                                <td class="p-3">
+                                    <button onclick="openEditDeal('${d.id}')" class="whitespace-nowrap text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg font-bold">
+                                        ✏️ فتح الديل
+                                    </button>
+                                </td>
+                            </tr>`;
+                        }).join('');
+                    }
+                }
+            } else if (dealsBox) {
+                dealsBox.classList.add('hidden');
+            }
         }
 
         // =========================================================================
@@ -1230,7 +1342,7 @@
         }
 
         function openNewDealModal() {
-            renderWhatsappInstances(); // التأكد من تحديث قائمة أرقام الشركة
+            renderWhatsappInstances();
             document.getElementById('dealForm').reset();
             document.getElementById('editDealId').value = "";
             document.getElementById('oldAmountPaid').value = "0";
@@ -1250,7 +1362,7 @@
         }
 
         function openEditDeal(dealId) {
-            renderWhatsappInstances(); // التأكد من تحديث قائمة أرقام الشركة
+            renderWhatsappInstances();
             const d = state.deals.find(x => x.id === dealId);
             if (!d) return;
 
@@ -1339,6 +1451,8 @@
             const dealPayload = {
                 employee_id: selectedEmpId,
                 whatsapp_instance_id: selectedWaId ? Number(selectedWaId) : null,
+                assigned_by_name: currentUser.full_name,
+                assigned_by_role: currentUser.role,
                 client_name: document.getElementById('clientName').value.trim(),
                 client_phone: document.getElementById('clientPhone').value.trim(),
                 client_location: document.getElementById('clientLocation').value.trim(),
@@ -1357,11 +1471,24 @@
 
             if (editId) {
                 const { error } = await db.from('deals').update(dealPayload).eq('id', editId);
-                if (error) return alert("❌ خطأ أثناء تحديث الديل: " + error.message);
+                if (error) {
+                    // في حال لم يقم بتشغيل سطر إضافة أعمدة assigned_by_name بعد، يحفظ بدونها تلقائياً
+                    delete dealPayload.assigned_by_name;
+                    delete dealPayload.assigned_by_role;
+                    const retry = await db.from('deals').update(dealPayload).eq('id', editId);
+                    if (retry.error) return alert("❌ خطأ أثناء تحديث الديل: " + retry.error.message);
+                }
             } else {
                 const { data: insertedDeal, error } = await db.from('deals').insert([dealPayload]).select().single();
-                if (error) return alert("❌ خطأ أثناء حفظ الديل: " + error.message);
-                savedDealId = insertedDeal.id;
+                if (error) {
+                    delete dealPayload.assigned_by_name;
+                    delete dealPayload.assigned_by_role;
+                    const retry = await db.from('deals').insert([dealPayload]).select().single();
+                    if (retry.error) return alert("❌ خطأ أثناء حفظ الديل: " + retry.error.message);
+                    savedDealId = retry.data.id;
+                } else {
+                    savedDealId = insertedDeal.id;
+                }
             }
 
             if (diffPaid > 0) {
@@ -1459,11 +1586,20 @@
                 }
             }
 
-            if (!selectedEmployeeHistoryId) return;
-            const clickedInsideCard = event.target.closest('.emp-card-item');
-            const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
-            if (!clickedInsideCard && !clickedInsideHistory) {
-                closeEmployeeHistory();
+            if (selectedEmployeeHistoryId) {
+                const clickedInsideCard = event.target.closest('.emp-card-item');
+                const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
+                if (!clickedInsideCard && !clickedInsideHistory) {
+                    closeEmployeeHistory();
+                }
+            }
+
+            if (selectedWaInstanceId) {
+                const clickedInsideWaCard = event.target.closest('.wa-card-item');
+                const clickedInsideWaBox = event.target.closest('#selectedWaDealsBox');
+                if (!clickedInsideWaCard && !clickedInsideWaBox) {
+                    closeWaDealsHistory();
+                }
             }
         }
 
@@ -1611,7 +1747,7 @@
 
             tbody.innerHTML = list.map(d => {
                 const emp = state.employees.find(e => e.id === d.employee_id);
-                const waInst = state.waInstances.find(w => w.id === d.whatsapp_instance_id);
+                const waInst = state.waInstances.find(w => Number(w.id) === Number(d.whatsapp_instance_id));
                 let badge = '';
                 let rowBgClass = 'hover:bg-slate-50';
                 let actionButtons = '';
