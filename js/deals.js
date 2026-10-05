@@ -1,11 +1,31 @@
 // =========================================================================
-// إدارة الصفقات، الساعات السويسرية، ومعاينة الواتساب (Deals Module)
+// إدارة الصفقات، الساعات السويسرية (مع الحفظ التلقائي للأنواع اليدوية)، والبحث الذكي
 // =========================================================================
 
 let searchTimer;
 function handleSearchDeals(q) {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => renderDeals(q.trim()), 120);
+    searchTimer = setTimeout(() => renderDeals(q.trim()), 100);
+}
+
+// دالة توحيد الحروف العربية والإنجليزية لضمان دقة البحث 100% للأنواع اليدوية والجاهزة
+function normalizeSearchText(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .trim()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي');
+}
+
+// دمج الماركات السويسرية الأساسية مع أي ماركات يدوية تمت إضافتها سابقاً في الصفقات
+function getAllAvailableWatchBrands() {
+    const customBrandsFromDeals = state.deals
+        .map(d => d.watch_brand ? d.watch_brand.trim() : '')
+        .filter(b => b && !SWISS_BRANDS.includes(b));
+
+    return [...new Set([...SWISS_BRANDS, ...customBrandsFromDeals])];
 }
 
 function toggleWatchDropdown() {
@@ -22,18 +42,36 @@ function toggleWatchDropdown() {
 }
 
 function filterWatchBrandsList(query = '') {
-    const q = query.trim().toLowerCase();
+    const qRaw = query.trim();
+    const qNorm = normalizeSearchText(qRaw);
     const container = document.getElementById('watchBrandsListItems');
-    const filtered = SWISS_BRANDS.filter(b => b.toLowerCase().includes(q));
+    const allBrands = getAllAvailableWatchBrands();
+
+    const filtered = allBrands.filter(b => normalizeSearchText(b).includes(qNorm));
+
+    // إذا كتب المستخدم نوعاً جديداً في خانة بحث القائمة، نضبطه تلقائياً كقيمة مختارة حتى لو لم يضغط على الزر
+    if (qRaw) {
+        document.getElementById('watchBrandSelect').value = 'custom';
+        document.getElementById('watchBrandCustom').value = qRaw;
+        document.getElementById('selectedWatchBrandLabel').textContent = `⌚ ${qRaw}`;
+        updateWhatsAppPreview();
+    }
 
     let html = `<div onclick="selectWatchBrandOption('')" class="p-2.5 hover:bg-blue-50 cursor-pointer text-slate-500">-- بدون تحديد ماركة --</div>`;
-    html += filtered.map(b => `
-        <div onclick="selectWatchBrandOption('${b}')" class="p-2.5 hover:bg-blue-50 cursor-pointer text-slate-800">${b}</div>
-    `).join('');
+    html += filtered.map(b => {
+        const safeBrand = b.replace(/'/g, "\\'");
+        const isCustomSaved = !SWISS_BRANDS.includes(b);
+        return `
+        <div onclick="selectWatchBrandOption('${safeBrand}')" class="p-2.5 hover:bg-blue-50 cursor-pointer text-slate-800 flex justify-between items-center">
+            <span>${b}</span>
+            ${isCustomSaved ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">مضاف يدوياً</span>' : ''}
+        </div>`;
+    }).join('');
 
+    const safeQuery = qRaw.replace(/'/g, "\\'");
     html += `
-        <div onclick="selectWatchBrandOption('custom', '${query.trim()}')" class="p-2.5 bg-blue-50 hover:bg-blue-100 cursor-pointer text-blue-700 font-extrabold">
-            ➕ نوع آخر (إضافة يدوية)${query.trim() ? `: "${query.trim()}"` : '...'}
+        <div onclick="selectWatchBrandOption('custom', '${safeQuery}')" class="p-2.5 bg-blue-50 hover:bg-blue-100 cursor-pointer text-blue-700 font-extrabold">
+            ➕ نوع آخر (إضافة يدوية)${qRaw ? `: "${qRaw}"` : '...'}
         </div>`;
 
     container.innerHTML = html;
@@ -46,10 +84,14 @@ function selectWatchBrandOption(val, prefillCustom = '') {
     const label = document.getElementById('selectedWatchBrandLabel');
 
     if (val === 'custom') {
-        label.textContent = '➕ نوع آخر (مكتوب يدوياً)';
         customInput.classList.remove('hidden');
-        if (prefillCustom) customInput.value = prefillCustom;
-        customInput.focus();
+        if (prefillCustom) {
+            customInput.value = prefillCustom;
+            label.textContent = `⌚ ${prefillCustom} (يدوي)`;
+        } else {
+            label.textContent = '➕ نوع آخر (اكتبه في الخانة بالأسفل)';
+        }
+        setTimeout(() => customInput.focus(), 50);
     } else {
         label.textContent = val || '-- اختر أو اكتب ماركة الساعة --';
         customInput.classList.add('hidden');
@@ -60,10 +102,16 @@ function selectWatchBrandOption(val, prefillCustom = '') {
 
 function getSelectedWatchBrand() {
     const sel = document.getElementById('watchBrandSelect').value;
-    if (sel === 'custom') {
-        return document.getElementById('watchBrandCustom').value.trim();
+    const customVal = document.getElementById('watchBrandCustom').value.trim();
+    const searchInputVal = document.getElementById('watchBrandSearchInput')
+        ? document.getElementById('watchBrandSearchInput').value.trim()
+        : '';
+
+    // الأولوية للخانة اليدوية إذا كانت مكتوبة، ثم الاختيار، ثم نص البحث داخل القائمة
+    if (sel === 'custom' || customVal) {
+        return customVal || searchInputVal;
     }
-    return sel;
+    return sel || searchInputVal;
 }
 
 function fillDefaultReminderText() {
@@ -71,12 +119,17 @@ function fillDefaultReminderText() {
     const brand = getSelectedWatchBrand() || 'الساعة المعروضة';
     const mt = document.getElementById('meetingTime').value;
     const timeFormatted = mt ? new Date(mt).toLocaleString('ar-EG') : 'الموعد المتفق عليه';
-    const msg = `أهلاً بك أستاذ ${client} 👋\nنذكركم بموعدنا في (MRC) بخصوص (${brand}) في تمام: ${timeFormatted}.\nفي انتظاركم، وشكراً لتعاملكم معنا! ⌚`;
+    const msg = `أهلاً بك أستاذ ${client} 👋\nنذكركم بموعدنا في (القصر الملكي - ASER WATCH) بخصوص (${brand}) في تمام: ${timeFormatted}.\nفي انتظاركم، وشكراً لتعاملكم معنا! ⌚`;
     document.getElementById('reminderMessage').value = msg;
     updateWhatsAppPreview();
 }
 
 function updateWhatsAppPreview() {
+    const customVal = document.getElementById('watchBrandCustom').value.trim();
+    if (customVal && document.getElementById('watchBrandSelect').value === 'custom') {
+        document.getElementById('selectedWatchBrandLabel').textContent = `⌚ ${customVal} (يدوي)`;
+    }
+
     const customMsg = document.getElementById('reminderMessage').value.trim();
     if (customMsg) {
         document.getElementById('waPreviewText').textContent = customMsg;
@@ -133,6 +186,9 @@ function openNewDealModal() {
     document.getElementById('amountPaid').disabled = false;
     document.getElementById('dealStatus').value = 'in_progress';
     document.getElementById('dealWhatsappInstance').value = '';
+    if (document.getElementById('watchBrandSearchInput')) {
+        document.getElementById('watchBrandSearchInput').value = '';
+    }
     selectWatchBrandOption('');
     document.getElementById('dealModalTitle').textContent = "تسجيل ديل / ساعة جديدة";
     document.getElementById('imagePreview').classList.add('hidden');
@@ -157,6 +213,10 @@ function openEditDeal(dealId) {
     document.getElementById('clientName').value = d.client_name || '';
     document.getElementById('clientPhone').value = d.client_phone || '';
     document.getElementById('clientLocation').value = d.client_location || '';
+
+    if (document.getElementById('watchBrandSearchInput')) {
+        document.getElementById('watchBrandSearchInput').value = '';
+    }
 
     const savedBrand = d.watch_brand || '';
     if (!savedBrand || SWISS_BRANDS.includes(savedBrand)) {
@@ -289,6 +349,9 @@ async function saveDeal(e) {
     document.getElementById('imagePreview').classList.add('hidden');
     closeModal('dealModal');
     await loadAllData();
+    // إعادة تطبيق فلتر البحث الحالي بعد الحفظ مباشرة
+    const currentSearch = document.getElementById('dealSearchInput') ? document.getElementById('dealSearchInput').value.trim() : '';
+    renderDeals(currentSearch);
 }
 
 function renderDeals(query = '') {
@@ -296,14 +359,20 @@ function renderDeals(query = '') {
     let list = state.deals;
 
     if (query) {
-        const qLower = query.toLowerCase();
-        list = list.filter(d =>
-            (d.client_name && d.client_name.toLowerCase().includes(qLower)) ||
-            (d.client_phone && d.client_phone.toLowerCase().includes(qLower)) ||
-            (d.deal_details && d.deal_details.toLowerCase().includes(qLower)) ||
-            (d.watch_brand && d.watch_brand.toLowerCase().includes(qLower)) ||
-            (d.client_location && d.client_location.toLowerCase().includes(qLower))
-        );
+        // تقسيم جملة البحث إلى كلمات وتوحيد الحروف العربية والإنجليزية للبحث في كل خانات الديل
+        const qWords = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+        list = list.filter(d => {
+            const searchableContent = normalizeSearchText([
+                d.client_name,
+                d.client_phone,
+                d.watch_brand,
+                d.deal_details,
+                d.client_location,
+                d.selling_price_range
+            ].join(' '));
+
+            return qWords.every(word => searchableContent.includes(word));
+        });
     }
 
     if (list.length === 0) {
