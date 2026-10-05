@@ -1,0 +1,32 @@
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f1f5f9;
+}
+
+.tab-active {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 700;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.toast-animate {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+/* خلفية معاينة رسالة الواتساب */
+.wa-preview-bg {
+    background-color: #e5ddd5;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 16px 16px;
+}
