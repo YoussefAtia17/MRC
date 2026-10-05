@@ -1,9 +1,26 @@
 // =========================================================================
-// إدارة الأونرز، الموظفين، السلف الفورية، والبونص (Employees Module)
+// إدارة الأونرز، الموظفين، السلف الفورية، والبونص (مع التصفير الشهري التلقائي من يوم الإضافة)
 // =========================================================================
 
 function toggleSalaryFieldByRole(role) {
     document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
+}
+
+// حساب بداية دورة الشهر الحالية للموظف بناءً على يوم إضافته (created_at)
+function getEmployeeCycleStartDate(empCreatedAt) {
+    const now = new Date();
+    const createdDate = empCreatedAt ? new Date(empCreatedAt) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const hireDay = createdDate.getDate(); // اليوم اللي اتضاف فيه الموظف (مثلاً يوم 6)
+
+    // بداية الدورة في الشهر الحالي بنفس يوم الإضافة
+    let cycleStart = new Date(now.getFullYear(), now.getMonth(), hireDay, 0, 0, 0);
+
+    // لو النهاردة لسه مجاش يوم الإضافة في الشهر ده، تبقى الدورة الحالية بدأت من الشهر اللي فات في نفس اليوم
+    if (now < cycleStart) {
+        cycleStart = new Date(now.getFullYear(), now.getMonth() - 1, hireDay, 0, 0, 0);
+    }
+
+    return cycleStart;
 }
 
 async function ownerCreateEmployee(e) {
@@ -144,9 +161,18 @@ function renderEmployees() {
         const linkedUser = state.users.find(u => u.id === emp.user_id);
         const isOwnerCard = linkedUser && linkedUser.role === 'owner';
 
-        const recs = state.empFinancials.filter(f => f.employee_id === emp.id);
-        const loans = recs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
-        const bonus = recs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
+        // حساب بداية الدورة الشهرية للموظف من يوم إضافته
+        const cycleStart = getEmployeeCycleStartDate(emp.created_at);
+        const nextResetDate = new Date(cycleStart);
+        nextResetDate.setMonth(nextResetDate.getMonth() + 1);
+        const hireDay = cycleStart.getDate();
+
+        const allRecs = state.empFinancials.filter(f => f.employee_id === emp.id);
+        // فلترة السلف والبونص الخاصة بدورة الشهر الحالية فقط (تتصفر تلقائياً كل شهر في يوم إضافته)
+        const currentCycleRecs = allRecs.filter(f => new Date(f.transaction_date || f.created_at) >= cycleStart);
+
+        const loans = currentCycleRecs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
+        const bonus = currentCycleRecs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
         const net = Number(emp.base_salary) + bonus - loans;
         const isSelected = selectedEmployeeHistoryId === emp.id;
 
@@ -162,7 +188,7 @@ function renderEmployees() {
                         <h3 class="font-extrabold text-base text-amber-300 flex items-center gap-2">
                             <span>${emp.full_name}</span>
                             <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-amber-200'}">
-                                ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
+                                ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
                             </span>
                         </h3>
                         <p class="text-xs text-slate-300 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
@@ -173,8 +199,8 @@ function renderEmployees() {
                 </div>
                 <div class="mt-4 space-y-1 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-700">
                     <div class="flex justify-between text-slate-300"><span>الصلاحية:</span><b class="text-amber-400">تحكم كامل في النظام والخزنة</b></div>
-                    <div class="flex justify-between text-emerald-400"><span>إجمالي المكافآت المسجلة:</span><b>${bonus.toLocaleString()} ج.م</b></div>
-                    <div class="flex justify-between text-rose-400"><span>إجمالي المسحوبات/السلف:</span><b>${loans.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-emerald-400"><span>مكافآت الدورة الحالية:</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-rose-400"><span>مسحوبات الدورة الحالية:</span><b>${loans.toLocaleString()} ج.م</b></div>
                 </div>
             </div>`;
         }
@@ -185,12 +211,12 @@ function renderEmployees() {
             <div class="flex justify-between items-start">
                 <div>
                     <span class="inline-block bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
-                        💼 موظف (Employee)
+                        💼 موظف (يتجدد يوم ${hireDay} شهرياً)
                     </span>
                     <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
                         <span>${emp.full_name}</span>
                         <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
-                            ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
+                            ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
                         </span>
                     </h3>
                     <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
@@ -199,9 +225,12 @@ function renderEmployees() {
             </div>
             <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${Number(emp.base_salary).toLocaleString()} ج.م</b></div>
-                <div class="flex justify-between text-emerald-700"><span>+ إجمالي البونص:</span><b>${bonus.toLocaleString()} ج.م</b></div>
-                <div class="flex justify-between text-rose-600"><span>- إجمالي السلف المسحوبة:</span><b>${loans.toLocaleString()} ج.م</b></div>
+                <div class="flex justify-between text-emerald-700"><span>+ إجمالي البونص (الشهر الحالي):</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                <div class="flex justify-between text-rose-600"><span>- إجمالي السلف (الشهر الحالي):</span><b>${loans.toLocaleString()} ج.م</b></div>
                 <div class="border-t pt-1.5 flex justify-between font-extrabold text-blue-700"><span>صافي المرتب:</span><span>${net.toLocaleString()} ج.م</span></div>
+                <div class="text-[10px] text-slate-400 pt-1 text-center font-semibold">
+                    🔄 يتصفر تلقائياً ويعود للمرتب الأساسي يوم: ${nextResetDate.toLocaleDateString('ar-EG')}
+                </div>
             </div>
         </div>`;
     }).join('');
@@ -210,6 +239,7 @@ function renderEmployees() {
     if (selectedEmployeeHistoryId) {
         const selectedEmp = state.employees.find(e => e.id === selectedEmployeeHistoryId);
         if (selectedEmp) {
+            const cycleStart = getEmployeeCycleStartDate(selectedEmp.created_at);
             historyBox.classList.remove('hidden');
             document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بـ: (${selectedEmp.full_name})`;
             const empRecs = state.empFinancials.filter(f => f.employee_id === selectedEmployeeHistoryId);
@@ -217,18 +247,26 @@ function renderEmployees() {
             if (empRecs.length === 0) {
                 document.getElementById('empFinancialsTableBody').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-slate-400">لا توجد سلف أو مكافآت مسجلة</td></tr>`;
             } else {
-                document.getElementById('empFinancialsTableBody').innerHTML = empRecs.map(f => `
-                    <tr>
-                        <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
-                        <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
-                        <td class="p-3">${f.notes || '-'}</td>
-                        <td class="p-3 text-xs">${new Date(f.transaction_date).toLocaleString('ar-EG')}</td>
-                        <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">✅ تم الخصم من الخزنة</span></td>
-                        <td class="p-3 ${currentUser.role === 'owner' ? '' : 'hidden'}">
-                            <button onclick="deleteRow('employee_financials', '${f.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">حذف</button>
-                        </td>
-                    </tr>
-                `).join('');
+                document.getElementById('empFinancialsTableBody').innerHTML = empRecs.map(f => {
+                    const fDate = new Date(f.transaction_date || f.created_at);
+                    const isCurrentCycle = fDate >= cycleStart;
+                    return `
+                        <tr class="${isCurrentCycle ? '' : 'bg-slate-50 text-slate-400'}">
+                            <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
+                            <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
+                            <td class="p-3">${f.notes || '-'}</td>
+                            <td class="p-3 text-xs">${fDate.toLocaleString('ar-EG')}</td>
+                            <td class="p-3">
+                                ${isCurrentCycle
+                                    ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">🟢 في دورة الشهر الحالي</span>'
+                                    : '<span class="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">📦 دورة شهر سابق</span>'}
+                            </td>
+                            <td class="p-3 ${currentUser.role === 'owner' ? '' : 'hidden'}">
+                                <button onclick="deleteRow('employee_financials', '${f.id}')" class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
         }
     } else {
