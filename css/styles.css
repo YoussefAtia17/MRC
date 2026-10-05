@@ -4,8 +4,8 @@ body {
 }
 
 .tab-active {
-    background-color: #2563eb;
-    color: white;
+    background-color: #d97706;
+    color: #ffffff;
     font-weight: 700;
 }
 
@@ -29,4 +29,54 @@ body {
     background-color: #e5ddd5;
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 16px 16px;
+}
+
+/* =========================================================
+   تأثيرات شاشة الافتتاحية الملكية (Royal Opening Screen)
+   ========================================================= */
+.royal-gold-text {
+    background: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #b45309 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.85));
+        transform: scale(1.04);
+    }
+}
+
+.watch-logo-glow {
+    animation: pulseGlow 2.4s infinite ease-in-out;
+}
+
+@keyframes rotateHand {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.watch-second-hand {
+    transform-origin: 50px 54px;
+    animation: rotateHand 4s linear infinite;
+}
+
+@keyframes loadingProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+.splash-progress-bar {
+    animation: loadingProgress 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.splash-fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.05);
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
 }

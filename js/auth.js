@@ -1,8 +1,13 @@
-// =========================================================================
-// المصادقة، الجلسات، وإعدادات الحساب الشخصي (Auth & Profile)
-// =========================================================================
-
 window.addEventListener('DOMContentLoaded', () => {
+    // إخفاء شاشة الـ Opening الملكية بنعومة بعد 2.3 ثانية
+    const splash = document.getElementById('royalSplashScreen');
+    if (splash) {
+        setTimeout(() => {
+            splash.classList.add('splash-fade-out');
+            setTimeout(() => splash.remove(), 700);
+        }, 2300);
+    }
+
     try {
         if (typeof db !== 'undefined' && db) {
             const savedUser = sessionStorage.getItem('mrc_user') || localStorage.getItem('mrc_user');
@@ -17,7 +22,6 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('mrc_user');
     }
 });
-
 async function handleSignIn(e) {
     if (e) e.preventDefault();
 
