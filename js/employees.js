@@ -1,9 +1,21 @@
 // =========================================================================
-// إدارة الأونرز، الموظفين، السلف الفورية، والبونص (Employees Module)
+// إدارة الأونرز، الموظفين، السلف الفورية، البونص، وتقفيل الرواتب الشهري
 // =========================================================================
 
 function toggleSalaryFieldByRole(role) {
     document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
+}
+
+// دالة مساعدة لمعرفة اسم الشهر والسنة الحالية (مثال: 2026-10)
+function getCurrentMonthTag() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `[راتب-${year}-${month}]`;
+}
+
+function getCurrentMonthArabicName() {
+    return new Date().toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
 }
 
 async function ownerCreateEmployee(e) {
@@ -127,10 +139,69 @@ async function saveEmpFinancial(e) {
     await loadAllData();
 }
 
+// =========================================================================
+// دالة صرف وتقفيل مرتب الشهر للموظف وخصمه من الخزنة (للأونر فقط)
+// =========================================================================
+async function payMonthlySalary(empId, event) {
+    if (event) event.stopPropagation();
+    if (currentUser.role !== 'owner') return;
+
+    const emp = state.employees.find(e => e.id === empId);
+    if (!emp) return;
+
+    const monthTag = getCurrentMonthTag();
+    const monthName = getCurrentMonthArabicName();
+
+    // التحقق مما إذا كان قد تم صرف راتب هذا الشهر بالفعل لهذا الموظف
+    const alreadyPaid = state.treasury.some(t =>
+        t.description && t.description.includes(monthTag) && t.description.includes(`emp:${emp.id}`)
+    );
+    if (alreadyPaid) {
+        return alert(`✅ تم صرف وتقفيل مرتب شهر (${monthName}) للموظف (${emp.full_name}) مسبقاً!`);
+    }
+
+    // حساب سلف الشهر الحالي فقط
+    const monthRecs = state.empFinancials.filter(f =>
+        f.employee_id === emp.id && isSameLocalMonth(f.transaction_date || f.created_at)
+    );
+    const monthLoans = monthRecs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
+    const baseSalary = Number(emp.base_salary || 0);
+
+    // المبلغ المتبقي للصرف من الخزنة آخر الشهر = المرتب الأساسي - السلف (لأن السلف والبونص اتخصموا وقتها)
+    const remainingToPay = Math.max(0, baseSalary - monthLoans);
+
+    if (remainingToPay > 0) {
+        const currentBalance = getCurrentTreasuryBalance();
+        if (currentBalance < remainingToPay) {
+            return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف مرتب الشهر!\n\nالمتبقي لصرف راتب (${emp.full_name}): ${remainingToPay.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
+        }
+    }
+
+    const confirmMsg = remainingToPay > 0
+        ? `هل أنت متأكد من صرف وتقفيل مرتب شهر (${monthName}) للموظف (${emp.full_name})؟\n\n• المرتب الأساسي: ${baseSalary.toLocaleString()} ج.م\n• السلف المسحوبة هذا الشهر: ${monthLoans.toLocaleString()} ج.م\n• الصافي المتبقي الذي سيُخصم الآن من الخزنة: ${remainingToPay.toLocaleString()} ج.م`
+        : `الموظف (${emp.full_name}) سحب سلفاً (${monthLoans.toLocaleString()} ج.م) تعادل أو تتجاوز مرتبه الأساسي (${baseSalary.toLocaleString()} ج.م).\n\nهل تريد تسجيل تقفيل راتب شهر (${monthName}) بدون خصم إضافي من الخزنة؟`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const { error } = await db.from('treasury_transactions').insert([{
+        transaction_type: 'out',
+        amount: remainingToPay,
+        description: `💰 صرف وتقفيل صافي مرتب شهر (${monthName}) للموظف: ${emp.full_name} (الأساسي: ${baseSalary.toLocaleString()} - سلف الشهر: ${monthLoans.toLocaleString()}) ${monthTag} [emp:${emp.id}]`
+    }]);
+
+    if (error) return alert("❌ خطأ أثناء تسجيل صرف المرتب في الخزنة: " + error.message);
+
+    showToast(`✅ تم صرف وتقفيل مرتب شهر (${monthName}) للموظف (${emp.full_name}) وخصم ${remainingToPay.toLocaleString()} ج.م من الخزنة!`, "success");
+    await loadAllData();
+}
+
 function renderEmployees() {
     const opts = state.employees.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
     document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر المسؤول --</option>` + opts;
     document.getElementById('finEmpId').innerHTML = opts;
+
+    const monthTag = getCurrentMonthTag();
+    const monthName = getCurrentMonthArabicName();
 
     const sortedList = [...state.employees].sort((a, b) => {
         const uA = state.users.find(u => u.id === a.user_id);
@@ -144,11 +215,21 @@ function renderEmployees() {
         const linkedUser = state.users.find(u => u.id === emp.user_id);
         const isOwnerCard = linkedUser && linkedUser.role === 'owner';
 
-        const recs = state.empFinancials.filter(f => f.employee_id === emp.id);
-        const loans = recs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
-        const bonus = recs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
-        const net = Number(emp.base_salary) + bonus - loans;
+        const allRecs = state.empFinancials.filter(f => f.employee_id === emp.id);
+        // حسابات الشهر الحالي فقط
+        const monthRecs = allRecs.filter(f => isSameLocalMonth(f.transaction_date || f.created_at));
+        const loans = monthRecs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
+        const bonus = monthRecs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
+        const baseSalary = Number(emp.base_salary || 0);
+        const net = baseSalary + bonus - loans;
+        const remainingSalaryToPay = Math.max(0, baseSalary - loans);
+
         const isSelected = selectedEmployeeHistoryId === emp.id;
+
+        // التحقق هل تم صرف مرتب هذا الشهر للموظف أم لا
+        const isMonthSalaryPaid = state.treasury.some(t =>
+            t.description && t.description.includes(monthTag) && t.description.includes(`emp:${emp.id}`)
+        );
 
         if (isOwnerCard) {
             return `
@@ -162,7 +243,7 @@ function renderEmployees() {
                         <h3 class="font-extrabold text-base text-amber-300 flex items-center gap-2">
                             <span>${emp.full_name}</span>
                             <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-amber-200'}">
-                                ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
+                                ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
                             </span>
                         </h3>
                         <p class="text-xs text-slate-300 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
@@ -173,36 +254,67 @@ function renderEmployees() {
                 </div>
                 <div class="mt-4 space-y-1 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-700">
                     <div class="flex justify-between text-slate-300"><span>الصلاحية:</span><b class="text-amber-400">تحكم كامل في النظام والخزنة</b></div>
-                    <div class="flex justify-between text-emerald-400"><span>إجمالي المكافآت المسجلة:</span><b>${bonus.toLocaleString()} ج.م</b></div>
-                    <div class="flex justify-between text-rose-400"><span>إجمالي المسحوبات/السلف:</span><b>${loans.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-emerald-400"><span>مكافآت هذا الشهر:</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-rose-400"><span>مسحوبات هذا الشهر:</span><b>${loans.toLocaleString()} ج.م</b></div>
                 </div>
             </div>`;
         }
 
+        // زر صرف وتقفيل مرتب الشهر (للأونر فقط)
+        let salaryActionBtn = '';
+        if (currentUser.role === 'owner') {
+            if (isMonthSalaryPaid) {
+                salaryActionBtn = `
+                    <div onclick="event.stopPropagation()" class="mt-3 w-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-extrabold py-2 px-3 rounded-xl text-center">
+                        ✅ تم صرف وتقفيل راتب (${monthName})
+                    </div>`;
+            } else {
+                salaryActionBtn = `
+                    <button onclick="payMonthlySalary('${emp.id}', event)" class="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition flex justify-center items-center gap-1">
+                        <span>💰 صرف وتقفيل راتب الشهر (${remainingSalaryToPay.toLocaleString()} ج.م)</span>
+                    </button>`;
+            }
+        } else if (isMonthSalaryPaid) {
+            salaryActionBtn = `
+                <div class="mt-3 w-full bg-emerald-100 text-emerald-800 text-xs font-extrabold py-2 px-3 rounded-xl text-center">
+                    ✅ تم صرف راتب (${monthName})
+                </div>`;
+        }
+
         return `
         <div onclick="toggleEmployeeCardHistory('${emp.id}', event)"
-             class="emp-card-item cursor-pointer bg-white p-5 rounded-2xl shadow-sm border-2 transition ${isSelected ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50/20' : 'border-slate-200 hover:border-blue-400'}">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="inline-block bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
-                        💼 موظف (Employee)
-                    </span>
-                    <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
-                        <span>${emp.full_name}</span>
-                        <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
-                            ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
+             class="emp-card-item cursor-pointer bg-white p-5 rounded-2xl shadow-sm border-2 transition ${isSelected ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50/20' : 'border-slate-200 hover:border-blue-400'} flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="inline-block bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
+                            💼 موظف (${monthName})
                         </span>
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
+                        <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
+                            <span>${emp.full_name}</span>
+                            <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
+                                ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
+                            </span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
+                    </div>
+                    ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
                 </div>
-                ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
+                <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${baseSalary.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-emerald-700"><span>+ بونص الشهر (صُرف):</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                    <div class="flex justify-between text-rose-600"><span>- سلف الشهر (خُصمت):</span><b>${loans.toLocaleString()} ج.م</b></div>
+                    <div class="border-t pt-1.5 flex justify-between font-extrabold text-blue-700">
+                        <span>المتبقي للقبض آخر الشهر:</span>
+                        <span>${remainingSalaryToPay.toLocaleString()} ج.م</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>إجمالي دخل الموظف بالبونص:</span>
+                        <b>${net.toLocaleString()} ج.م</b>
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${Number(emp.base_salary).toLocaleString()} ج.م</b></div>
-                <div class="flex justify-between text-emerald-700"><span>+ إجمالي البونص:</span><b>${bonus.toLocaleString()} ج.م</b></div>
-                <div class="flex justify-between text-rose-600"><span>- إجمالي السلف المسحوبة:</span><b>${loans.toLocaleString()} ج.م</b></div>
-                <div class="border-t pt-1.5 flex justify-between font-extrabold text-blue-700"><span>صافي المرتب:</span><span>${net.toLocaleString()} ج.م</span></div>
-            </div>
+            ${salaryActionBtn}
         </div>`;
     }).join('');
 
