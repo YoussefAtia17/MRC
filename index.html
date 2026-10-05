@@ -1316,10 +1316,9 @@
 
                 if (d.status === 'completed') {
                     rowBgClass = 'bg-emerald-50/50 hover:bg-emerald-50';
-                    badge = `<span class="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">✅ تم الشراء (Done)</span>`;
-                    actionButtons = `
+badge = `<span class="inline-block whitespace-nowrap bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">✅ تم الشراء (Done)</span>`;                    actionButtons = `
                         <div class="flex flex-col gap-1.5 items-start">
-                            <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
+                            <span class=" whitespace-nowrap text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
                                 ✔️ الديل منتهي (Done)
                             </span>
                             <button onclick="openEditDeal('${d.id}')" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold">✏️ تعديل الديل</button>
@@ -1327,8 +1326,7 @@
                         </div>`;
                 } else if (d.status === 'cancelled') {
                     rowBgClass = 'bg-rose-50/40 hover:bg-rose-50/70';
-                    badge = `<span class="bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق</span>`;
-                    actionButtons = `
+badge = `<span class="inline-block whitespace-nowrap bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق</span>`;                    actionButtons = `
                         <div class="flex flex-col gap-1.5">
                             <button onclick="reopenCancelledDeal('${d.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
                                 🔄 الرجوع للديل مرة أخرى
@@ -1337,8 +1335,7 @@
                             <button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 } else {
-                    badge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;
-                    actionButtons = `
+badge = `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;                    actionButtons = `
                         <div class="flex flex-col gap-1.5">
                             <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
                                 ✏️ تخليص / تعديل الديل
