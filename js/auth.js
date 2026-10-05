@@ -1,137 +1,196 @@
 // =========================================================================
-// الدوال المساعدة المشتركة (Utilities & UI Helpers)
+// المصادقة، الجلسات، وإعدادات الحساب الشخصي (Auth & Profile)
 // =========================================================================
 
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const colors = {
-        success: 'bg-emerald-600 border-emerald-700',
-        info: 'bg-blue-600 border-blue-700',
-        warning: 'bg-amber-600 border-amber-700'
-    };
-    const toast = document.createElement('div');
-    toast.className = `toast-animate pointer-events-auto ${colors[type] || colors.info} text-white p-4 rounded-2xl shadow-2xl border flex justify-between items-start gap-3 text-xs font-bold`;
-    toast.innerHTML = `
-        <div>🔔 ${message}</div>
-        <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white font-extrabold">✕</button>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => { if (toast.parentElement) toast.remove(); }, 6000);
+window.addEventListener('DOMContentLoaded', () => {
+    try {
+        if (typeof db !== 'undefined' && db) {
+            const savedUser = sessionStorage.getItem('mrc_user') || localStorage.getItem('mrc_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                launchApp();
+            }
+        }
+    } catch (err) {
+        console.error("Init error:", err);
+        sessionStorage.removeItem('mrc_user');
+        localStorage.removeItem('mrc_user');
+    }
+});
+
+async function handleSignIn(e) {
+    if (e) e.preventDefault();
+
+    if (typeof db === 'undefined' || !db) {
+        alert("❌ لم يتم تحميل ملف الإعدادات (js/config.js)! تأكد من رفع فولدر js على GitHub.");
+        return false;
+    }
+
+    const identifier = document.getElementById('loginIdentifier').value.trim();
+    const pass = document.getElementById('loginPassword').value.trim();
+    const submitBtn = document.getElementById('btnSignInSubmit');
+
+    if (SYSTEM_LOCK_EMAILS.includes(identifier.toLowerCase())) {
+        alert("❌ هذا سجل نظام داخلي لحفظ كلمات المرور فقط.");
+        return false;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "⏳ جاري تسجيل الدخول...";
+    }
+
+    try {
+        const { data: usersList, error } = await db
+            .from('app_users')
+            .select('*')
+            .eq('password_hash', pass);
+
+        if (error || !usersList) {
+            alert("❌ خطأ في الاتصال بقاعدة البيانات: " + (error ? error.message : ''));
+            return false;
+        }
+
+        const matchedUser = usersList.find(u =>
+            !SYSTEM_LOCK_EMAILS.includes(u.email) &&
+            ((u.email && u.email.toLowerCase() === identifier.toLowerCase()) ||
+             (u.full_name && u.full_name.toLowerCase() === identifier.toLowerCase()))
+        );
+
+        if (!matchedUser) {
+            alert("❌ اسم المستخدم/الإيميل أو كلمة المرور غير صحيحة!");
+            return false;
+        }
+
+        currentUser = matchedUser;
+        isTreasuryUnlocked = false;
+        isWhatsappUnlocked = false;
+        sessionStorage.setItem('mrc_user', JSON.stringify(matchedUser));
+        await launchApp();
+    } catch (err) {
+        alert("❌ حدث خطأ أثناء الدخول: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "دخول للنظام";
+        }
+    }
+    return false;
 }
 
-function openModal(id) {
-    document.getElementById(id).classList.remove('hidden');
-    document.getElementById(id).classList.add('flex');
+function logout() {
+    sessionStorage.removeItem('mrc_user');
+    localStorage.removeItem('mrc_user');
+    currentUser = null;
+    isTreasuryUnlocked = false;
+    isWhatsappUnlocked = false;
+    selectedEmployeeHistoryId = null;
+    selectedWaInstanceId = null;
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
 }
 
-function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-    document.getElementById(id).classList.remove('flex');
-}
+async function launchApp() {
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
 
-function viewDealImage(dealId) {
-    const d = state.deals.find(x => x.id === dealId);
-    if (!d || !d.item_image_url) return;
-    document.getElementById('lightboxImg').src = d.item_image_url;
-    document.getElementById('lightboxCaption').textContent = `صورة ديل العميل: ${d.client_name} (${d.watch_brand || d.deal_details})`;
-    openModal('imageViewerModal');
-}
+    document.getElementById('currentUserName').textContent = currentUser.full_name;
+    const roleNames = { owner: '👑 الأونر (Full Admin)', employee: '💼 موظف' };
+    document.getElementById('currentUserRoleBadge').textContent = roleNames[currentUser.role] || 'موظف';
 
-function isSameLocalDay(dateString) {
-    if (!dateString) return false;
-    const d = new Date(dateString);
-    const now = new Date();
-    return d.getFullYear() === now.getFullYear() &&
-           d.getMonth() === now.getMonth() &&
-           d.getDate() === now.getDate();
-}
+    document.querySelectorAll('.owner-only').forEach(el => el.classList.toggle('hidden', currentUser.role !== 'owner'));
 
-function isSameLocalMonth(dateString) {
-    if (!dateString) return false;
-    const d = new Date(dateString);
-    const now = new Date();
-    return d.getFullYear() === now.getFullYear() &&
-           d.getMonth() === now.getMonth();
-}
-
-function getCurrentTreasuryBalance() {
-    let totalIn = 0, totalOut = 0;
-    state.treasury.forEach(t => {
-        if (t.transaction_type === 'in') totalIn += Number(t.amount || 0);
-        else if (t.transaction_type === 'out') totalOut += Number(t.amount || 0);
-    });
-    return totalIn - totalOut;
-}
-
-function compressAndPreviewImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxW = 700;
-            const scale = maxW / img.width;
-            canvas.width = img.width > maxW ? maxW : img.width;
-            canvas.height = img.width > maxW ? img.height * scale : img.height;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            compressedImageDataUrl = canvas.toDataURL('image/jpeg', 0.65);
-            const preview = document.getElementById('imagePreview');
-            preview.src = compressedImageDataUrl;
-            preview.classList.remove('hidden');
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-async function deleteRow(table, id) {
-    if (!confirm("هل أنت متأكد من الحذف النهائي؟")) return;
-    await db.from(table).delete().eq('id', id);
+    switchPage('deals');
     await loadAllData();
 }
 
-function switchPage(pageId) {
-    if (pageId === 'treasury' && !isTreasuryUnlocked) {
-        return requestTreasuryAccess();
+async function loadAllData() {
+    if (!db || !currentUser) return;
+    try {
+        const [empRes, dealRes, finRes, trRes, usrRes, waRes] = await Promise.all([
+            db.from('employees').select('*').order('created_at', { ascending: false }),
+            db.from('deals').select('*').order('created_at', { ascending: false }),
+            db.from('employee_financials').select('*').order('transaction_date', { ascending: false }),
+            db.from('treasury_transactions').select('*').order('transaction_date', { ascending: false }),
+            db.from('app_users').select('*').order('created_at', { ascending: false }),
+            db.from('whatsapp_instances').select('*').order('id', { ascending: true })
+        ]);
+
+        state.employees = empRes.data || [];
+        state.deals = dealRes.data || [];
+        state.empFinancials = finRes.data || [];
+        state.treasury = trRes.data || [];
+        state.users = usrRes.data || [];
+        state.waInstances = waRes.data || [];
+
+        renderAll();
+    } catch (err) {
+        console.error("Error loading data:", err);
     }
-    if (pageId === 'whatsapp' && !isWhatsappUnlocked) {
-        return requestWhatsappAccess();
-    }
-    ['deals', 'employees', 'treasury', 'whatsapp', 'users'].forEach(p => {
-        const sec = document.getElementById(`page-${p}`);
-        if (sec) sec.classList.add('hidden');
-        const btn = document.getElementById(`tab-${p}`);
-        if (btn) { btn.classList.remove('tab-active'); btn.classList.add('text-slate-300'); }
-    });
-    document.getElementById(`page-${pageId}`).classList.remove('hidden');
-    const activeBtn = document.getElementById(`tab-${pageId}`);
-    if (activeBtn) { activeBtn.classList.add('tab-active'); activeBtn.classList.remove('text-slate-300'); }
 }
 
-function handleOutsideClick(event) {
-    const watchContainer = document.getElementById('watchBrandDropdownContainer');
-    const watchMenu = document.getElementById('watchDropdownMenu');
-    if (watchContainer && watchMenu && !watchMenu.classList.contains('hidden')) {
-        if (!watchContainer.contains(event.target)) {
-            watchMenu.classList.add('hidden');
-        }
+function renderAll() {
+    if (!currentUser) return;
+    if (typeof renderWhatsappInstances === 'function') renderWhatsappInstances();
+    if (typeof renderDeals === 'function') {
+        const searchInput = document.getElementById('dealSearchInput');
+        renderDeals(searchInput ? searchInput.value : '');
+    }
+    if (typeof renderEmployees === 'function') renderEmployees();
+    if (typeof renderTreasury === 'function') renderTreasury();
+    if (typeof renderUsers === 'function') renderUsers();
+}
+
+function openProfileModal() {
+    document.getElementById('profName').value = currentUser.full_name || '';
+    document.getElementById('profEmail').value = (currentUser.email && !currentUser.email.endsWith('@mrc.local')) ? currentUser.email : '';
+    document.getElementById('profPhone').value = currentUser.phone || '';
+    document.getElementById('profPassword').value = currentUser.password_hash || '';
+    openModal('profileModal');
+}
+
+async function saveProfileSettings(e) {
+    e.preventDefault();
+    const full_name = document.getElementById('profName').value.trim();
+    const rawEmail = document.getElementById('profEmail').value.trim();
+    const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
+    const phone = document.getElementById('profPhone').value.trim();
+    const password_hash = document.getElementById('profPassword').value.trim();
+
+    if (!phone) return alert("⚠️ رقم التليفون / الواتساب مطلوب!");
+
+    const { data: updatedUser, error } = await db
+        .from('app_users')
+        .update({ full_name, email, phone, password_hash })
+        .eq('id', currentUser.id)
+        .select()
+        .single();
+
+    if (error) return alert("❌ خطأ أثناء حفظ الإعدادات: " + error.message);
+
+    const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
+    if (myEmp) {
+        await db.from('employees').update({ full_name, phone_whatsapp: phone }).eq('id', myEmp.id);
     }
 
-    if (selectedEmployeeHistoryId) {
-        const clickedInsideCard = event.target.closest('.emp-card-item');
-        const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
-        if (!clickedInsideCard && !clickedInsideHistory) {
-            closeEmployeeHistory();
-        }
-    }
+    currentUser = updatedUser;
+    sessionStorage.setItem('mrc_user', JSON.stringify(updatedUser));
+    document.getElementById('currentUserName').textContent = updatedUser.full_name;
+    closeModal('profileModal');
+    showToast("✅ تم حفظ بياناتك وكلمة المرور الجديدة في قاعدة البيانات!", "success");
+    await loadAllData();
+}
 
-    if (selectedWaInstanceId) {
-        const clickedInsideWaCard = event.target.closest('.wa-card-item');
-        const clickedInsideWaBox = event.target.closest('#selectedWaDealsBox');
-        if (!clickedInsideWaCard && !clickedInsideWaBox) {
-            closeWaDealsHistory();
-        }
-    }
+function renderUsers() {
+    const visibleUsers = state.users.filter(u => !SYSTEM_LOCK_EMAILS.includes(u.email));
+    document.getElementById('usersTableBody').innerHTML = visibleUsers.map(u => `
+        <tr>
+            <td class="p-3 font-bold">${u.full_name}</td>
+            <td class="p-3">${u.email && !u.email.endsWith('@mrc.local') ? u.email : '<span class="text-xs text-slate-400">يدخل بالاسم فقط</span>'}</td>
+            <td class="p-3 font-semibold text-emerald-700">${u.phone || '-'}</td>
+            <td class="p-3 font-bold">${u.role === 'owner' ? '<span class="bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full text-xs">👑 أونر</span>' : '<span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs">💼 موظف</span>'}</td>
+            <td class="p-3 text-xs">${new Date(u.created_at).toLocaleString('ar-EG')}</td>
+            <td class="p-3">${u.role !== 'owner' ? `<button onclick="deleteRow('app_users', '${u.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف الحساب</button>` : '-'}</td>
+        </tr>
+    `).join('');
 }

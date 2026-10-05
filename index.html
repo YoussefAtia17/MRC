@@ -25,7 +25,7 @@
                 <p class="text-xs text-slate-500 mt-1">يمكنك الدخول باستخدام اسم المستخدم (Username) أو البريد الإلكتروني</p>
             </div>
 
-            <form id="signinForm" onsubmit="handleSignIn(event)" class="space-y-4 text-sm">
+            <form id="signinForm" onsubmit="event.preventDefault(); handleSignIn(event); return false;" class="space-y-4 text-sm">
                 <div>
                     <label class="block font-bold mb-1">اسم المستخدم أو البريد الإلكتروني *</label>
                     <input type="text" id="loginIdentifier" required placeholder="اكتب اسمك أو الإيميل..." class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
@@ -34,7 +34,7 @@
                     <label class="block font-bold mb-1">كلمة المرور (Password) *</label>
                     <input type="password" id="loginPassword" required placeholder="••••••" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition">
+                <button type="submit" id="btnSignInSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition">
                     دخول للنظام
                 </button>
             </form>
