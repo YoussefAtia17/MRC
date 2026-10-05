@@ -15,7 +15,6 @@
             to { transform: translateY(0); opacity: 1; }
         }
         .toast-animate { animation: slideIn 0.3s ease-out forwards; }
-        /* خلفية معاينة الواتساب */
         .wa-preview-bg {
             background-color: #e5ddd5;
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
@@ -86,13 +85,16 @@
                         ⌚ 1. الصفقات والعملاء (Deals)
                     </button>
                     <button onclick="switchPage('employees')" id="tab-employees" class="tab-btn text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        👥 2. الموظفين والمرتبات والسلف
+                        👥 2. الإدارة والموظفين والسلف
                     </button>
                     <button onclick="requestTreasuryAccess()" id="tab-treasury" class="tab-btn text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap flex items-center gap-1">
                         <span>🔒 3. الخزنة والتقفيل اليومي/الشهري</span>
                     </button>
+                    <button onclick="switchPage('whatsapp')" id="tab-whatsapp" class="tab-btn owner-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
+                        📱 4. أرقام واتساب الشركة (WA Senders)
+                    </button>
                     <button onclick="switchPage('users')" id="tab-users" class="tab-btn owner-only text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
-                        🔐 4. حسابات النظام
+                        🔐 5. حسابات النظام
                     </button>
                 </div>
             </div>
@@ -123,9 +125,9 @@
                                     <th class="p-3.5">نوع الساعة والمكان</th>
                                     <th class="p-3.5">تفاصيل الـ Deal (الوصف)</th>
                                     <th class="p-3.5">الأسعار (المطلوب / رينج البيع / المدفوع)</th>
-                                    <th class="p-3.5">المعاد والـ Reminder</th>
+                                    <th class="p-3.5">المعاد ورقم الإرسال (Reminder)</th>
                                     <th class="p-3.5">الصورة</th>
-                                    <th class="p-3.5">الحالة والموظف</th>
+                                    <th class="p-3.5">الحالة والمسؤول</th>
                                     <th class="p-3.5">إجراءات الديل</th>
                                 </tr>
                             </thead>
@@ -136,13 +138,13 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 2: الموظفين والمرتبات والسلف (تفاعلي بالضغط على الكارت)      -->
+            <!-- PAGE 2: الإدارة والموظفين والسلف (كارت مميز للأونر وكارت للموظف) -->
             <!-- ================================================================= -->
             <section id="page-employees" class="hidden space-y-6">
                 <div class="flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
                     <div>
-                        <h2 class="font-bold text-lg">إدارة الموظفين، السلف، والمرتبات</h2>
-                        <p class="text-xs text-blue-600 font-semibold">💡 اضغط على كارت أي موظف لإظهار سجل السلف والبونص الخاص به، واضغط مرة أخرى أو خارج الكارت لإغلاقه</p>
+                        <h2 class="font-bold text-lg">إدارة الأونرز، الموظفين، السلف، والمرتبات</h2>
+                        <p class="text-xs text-blue-600 font-semibold">💡 اضغط على أي كارت لإظهار سجل السلف والبونص الخاص به، واضغط مرة أخرى أو خارج الكارت لإغلاقه</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="openEmpFinancialModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
@@ -154,13 +156,13 @@
                     </div>
                 </div>
 
-                <!-- كروت الموظفين -->
+                <!-- كروت الأونرز والموظفين -->
                 <div id="employeesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-                <!-- سجل الموظف المختار فقط (يظهر عند الضغط على الكارت ويختفي عند الضغط خارجه) -->
+                <!-- سجل الموظف المختار فقط -->
                 <div id="selectedEmployeeHistoryBox" class="hidden bg-white rounded-2xl shadow-lg border-2 border-blue-500 overflow-hidden transition-all" onclick="event.stopPropagation()">
                     <div class="p-4 border-b bg-blue-50 flex justify-between items-center">
-                        <span id="selectedEmpHistoryTitle" class="font-extrabold text-sm text-blue-900">📅 سجل السلف والبونص الخاص بالموظف</span>
+                        <span id="selectedEmpHistoryTitle" class="font-extrabold text-sm text-blue-900">📅 سجل السلف والبونص</span>
                         <button onclick="closeEmployeeHistory()" class="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-lg font-bold">إغلاق السجل ✕</button>
                     </div>
                     <div class="overflow-x-auto">
@@ -258,7 +260,24 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- PAGE 4: جدول حسابات النظام (للأونر فقط)                           -->
+            <!-- PAGE 4: إدارة أرقام واتساب الشركة الـ 10 (Company WhatsApp Numbers) -->
+            <!-- ================================================================= -->
+            <section id="page-whatsapp" class="hidden space-y-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-900">📱 إدارة أرقام واتساب الشركة (لإرسال الـ Reminders)</h2>
+                        <p class="text-xs text-slate-500 mt-1">سجل هنا أرقام واتساب البيزنس الخاصة بالشركة (حتى 10 أرقام أو أكثر) ليتم إرسال تذكيرات العملاء والموظفين من خلالها عبر الـ VPS و n8n</p>
+                    </div>
+                    <button onclick="openModal('addWhatsappModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow">
+                        + إضافة رقم واتساب للشركة
+                    </button>
+                </div>
+
+                <div id="waInstancesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- PAGE 5: جدول حسابات النظام (للأونر فقط)                           -->
             <!-- ================================================================= -->
             <section id="page-users" class="hidden space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -272,7 +291,7 @@
                                 <tr>
                                     <th class="p-3">اسم المستخدم (Username)</th>
                                     <th class="p-3">الإيميل</th>
-                                    <th class="p-3">التليفون</th>
+                                    <th class="p-3">رقم الواتساب</th>
                                     <th class="p-3">الصلاحية (Role)</th>
                                     <th class="p-3">تاريخ التسجيل</th>
                                     <th class="p-3">إجراء</th>
@@ -290,6 +309,34 @@
     <!-- النوافذ المنبثقة (Modals)                                          -->
     <!-- ================================================================= -->
 
+    <!-- نافذة إضافة رقم واتساب خاص بالشركة -->
+    <div id="addWhatsappModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-lg border-b pb-2">📱 إضافة رقم واتساب بيزنس للشركة</h3>
+            <form onsubmit="saveWhatsappInstance(event)" class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-bold mb-1">اسم الخط / الـ Instance (لربطه بالـ VPS) *</label>
+                    <input type="text" id="waInstanceName" required placeholder="مثال: WA_Business_1 أو خط الشركة 1" class="w-full border rounded-xl p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">رقم الواتساب (بكود الدولة) *</label>
+                    <input type="text" id="waPhoneNumber" required placeholder="مثال: 2010xxxxxxxx" class="w-full border rounded-xl p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">الحالة الحالية</label>
+                    <select id="waStatus" class="w-full border rounded-xl p-2.5 bg-white font-bold">
+                        <option value="connected">🟢 متصل ونشط (Connected)</option>
+                        <option value="disconnected">🔴 غير متصل مؤقتاً (Disconnected)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeModal('addWhatsappModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-emerald-600 text-white font-bold">حفظ الرقم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- نافذة البروفايل وإعدادات الحساب الشخصي (Profile & Settings) -->
     <div id="profileModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
@@ -304,8 +351,8 @@
                     <input type="email" id="profEmail" placeholder="يمكن تركه فارغاً والاعتماد على الاسم" class="w-full border rounded-xl p-2.5">
                 </div>
                 <div>
-                    <label class="block font-bold mb-1">رقم التليفون / الواتساب</label>
-                    <input type="text" id="profPhone" class="w-full border rounded-xl p-2.5">
+                    <label class="block font-bold mb-1">رقم التليفون / الواتساب *</label>
+                    <input type="text" id="profPhone" required class="w-full border rounded-xl p-2.5">
                 </div>
                 <div>
                     <label class="block font-bold mb-1 text-blue-700">🔑 كلمة المرور (Password) *</label>
@@ -363,7 +410,7 @@
         </div>
     </div>
 
-    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (مع القائمة الذكية القابلة للـ Scroll والبحث) -->
+    <!-- 1. نافذة إضافة / تعديل وتخليص ديل -->
     <div id="dealModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto">
             <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل بيانات عميل وديل جديد</h3>
@@ -387,33 +434,28 @@
                     </div>
                 </div>
 
-                <!-- نوع الساعة السويسرية (قائمة منسدلة قابلة للـ Scroll والبحث + كتابة يدوية) والموظف -->
+                <!-- نوع الساعة السويسرية والموظف المسؤول -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-blue-50/60 p-3 rounded-xl border border-blue-200">
                     <div class="relative" id="watchBrandDropdownContainer">
                         <label class="block font-bold mb-1 text-blue-900">⌚ نوع الساعة (السويسرية)</label>
-                        <!-- زر فتح القائمة -->
                         <div onclick="toggleWatchDropdown()" class="w-full border rounded-lg p-2 bg-white font-semibold flex justify-between items-center cursor-pointer">
                             <span id="selectedWatchBrandLabel">-- اختر أو اكتب ماركة الساعة --</span>
                             <span class="text-slate-400 text-xs">▼</span>
                         </div>
 
-                        <!-- القائمة المنسدلة القابلة للـ Scroll والبحث -->
                         <div id="watchDropdownMenu" class="hidden absolute left-0 right-0 mt-1 bg-white border-2 border-blue-500 rounded-xl shadow-2xl z-50 overflow-hidden">
                             <div class="p-2 bg-slate-50 border-b">
                                 <input type="text" id="watchBrandSearchInput" oninput="filterWatchBrandsList(this.value)" placeholder="🔍 ابحث عن ماركة أو اكتب نوع جديد..." class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-blue-600">
                             </div>
-                            <div id="watchBrandsListItems" class="max-h-52 overflow-y-auto divide-y divide-slate-100 text-xs font-semibold">
-                                <!-- يتم ملؤها تلقائياً مع Scroll سلس -->
-                            </div>
+                            <div id="watchBrandsListItems" class="max-h-52 overflow-y-auto divide-y divide-slate-100 text-xs font-semibold"></div>
                         </div>
 
-                        <!-- خانة الكتابة اليدوية لو اختار نوع آخر -->
                         <input type="text" id="watchBrandCustom" oninput="updateWhatsAppPreview()" placeholder="اكتب نوع الساعة وموديلها يدوياً هنا..." class="hidden mt-2 w-full border-2 border-blue-500 rounded-lg p-2 bg-white font-bold">
                         <input type="hidden" id="watchBrandSelect" value="">
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-1">الموظف المسؤول عن الديل</label>
+                        <label class="block font-semibold mb-1">الموظف / المسؤول عن الديل</label>
                         <select id="dealEmployee" class="w-full border rounded-lg p-2 bg-white"></select>
                     </div>
                 </div>
@@ -424,7 +466,7 @@
                     <textarea id="dealDetails" required rows="2" placeholder="مثال: عايز يبيع ساعة رولكس ديت جاست حالة زيرو بالبوكس والضمان..." class="w-full border rounded-lg p-2"></textarea>
                 </div>
 
-                <!-- قسم الأسعار (متاح للموظف والأونر) -->
+                <!-- قسم الأسعار -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border">
                     <div>
                         <label class="block font-bold mb-1 text-rose-700">🏷️ العميل طالب كام (ج.م)</label>
@@ -441,16 +483,20 @@
                     </div>
                 </div>
 
-                <!-- المعاد وحالة الديل -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- المعاد، رقم واتساب الشركة المرسل، وحالة الديل -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-semibold mb-1">⏰ المعاد المتفق عليه للتواصل أو المقابلة</label>
+                        <label class="block font-semibold mb-1">⏰ المعاد المتفق عليه (Reminder)</label>
                         <input type="datetime-local" id="meetingTime" oninput="updateWhatsAppPreview()" class="w-full border rounded-lg p-2">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1 text-emerald-800">📱 رقم واتساب الشركة المُرسل</label>
+                        <select id="dealWhatsappInstance" class="w-full border border-emerald-400 rounded-lg p-2 bg-white font-semibold"></select>
                     </div>
                     <div>
                         <label class="block font-bold mb-1 text-blue-700">حالة الديل</label>
                         <select id="dealStatus" onchange="onDealStatusChange(this.value)" class="w-full border border-blue-400 rounded-lg p-2 bg-white font-bold">
-                            <option value="in_progress">⏳ لسه مخلصش (لم يتم الشراء بعد)</option>
+                            <option value="in_progress">⏳ لسه مخلصش (قيد التواصل)</option>
                             <option value="completed">✅ تم الشراء وتخليص الديل (Done)</option>
                             <option value="cancelled">❌ لم يتم الاتفاق (الديل مكملش)</option>
                         </select>
@@ -460,12 +506,11 @@
                 <!-- رسالة الـ Reminder ومعاينة حية لشكلها على الواتساب -->
                 <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200 space-y-2">
                     <div class="flex justify-between items-center">
-                        <label class="block font-bold text-emerald-900">💬 رسالة التذكير للعميل (WhatsApp Reminder Message)</label>
+                        <label class="block font-bold text-emerald-900">💬 رسالة التذكير للعميل (تُرسل من رقم الشركة المختار)</label>
                         <button type="button" onclick="fillDefaultReminderText()" class="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold">توليد نص تلقائي</button>
                     </div>
                     <textarea id="reminderMessage" rows="2" oninput="updateWhatsAppPreview()" placeholder="اكتب الرسالة التي ستُرسل للعميل في ميعاده..." class="w-full border border-emerald-300 rounded-lg p-2 bg-white"></textarea>
 
-                    <!-- صندوق المعاينة الحية لشكل الرسالة على الواتساب -->
                     <div class="wa-preview-bg p-3 rounded-xl border border-slate-300">
                         <div class="text-[10px] text-slate-500 font-bold mb-1">📱 معاينة شكل الرسالة على واتساب العميل (Preview):</div>
                         <div class="bg-[#dcf8c6] text-slate-900 p-2.5 rounded-xl rounded-tr-none shadow-sm max-w-md text-xs leading-relaxed whitespace-pre-line relative">
@@ -489,38 +534,38 @@
         </div>
     </div>
 
-    <!-- 2. نافذة إنشاء أكونت جديد (موظف أو أونر) - الباسورد فقط هو الإجباري -->
+    <!-- 2. نافذة إنشاء أكونت جديد (موظف أو أونر) - الاسم والتليفون والباسورد إجباريين -->
     <div id="addEmployeeModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب جديد في النظام</h3>
-            <p class="text-xs text-slate-500">جميع الخانات اختيارية ما عدا كلمة المرور (Password) ويمكن الدخول بالاسم أو الإيميل.</p>
+            <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب جديد في النظام (للأونر فقط)</h3>
+            <p class="text-xs text-slate-500">يظهر للأونر كارت ذهبي مميز، وللموظف كارت رواتب وسلف، ويمكن الدخول بالاسم أو الإيميل.</p>
             <form onsubmit="ownerCreateEmployee(event)" class="space-y-3 text-sm">
                 <div>
-                    <label class="block font-bold mb-1 text-blue-800">نوع الحساب / الصلاحية (Role)</label>
+                    <label class="block font-bold mb-1 text-blue-800">نوع الحساب / الصلاحية (Role) *</label>
                     <select id="empRole" onchange="toggleSalaryFieldByRole(this.value)" class="w-full border-2 border-blue-400 rounded-lg p-2 bg-white font-bold">
                         <option value="employee">💼 موظف (Employee)</option>
                         <option value="owner">👑 أونر / مدير (Owner - Full Admin)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">الاسم / اسم المستخدم للدخول (Username)</label>
-                    <input type="text" id="empName" placeholder="مثال: ahmed (يُستخدم لتسجيل الدخول)" class="w-full border rounded-lg p-2">
+                    <label class="block font-bold mb-1">الاسم / اسم المستخدم للدخول (Username) * [إجباري]</label>
+                    <input type="text" id="empName" required placeholder="مثال: ahmed (يُستخدم لتسجيل الدخول)" class="w-full border rounded-lg p-2">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">البريد الإلكتروني (اختياري)</label>
-                    <input type="email" id="empEmail" placeholder="اختياري..." class="w-full border rounded-lg p-2">
+                    <label class="block font-bold mb-1 text-emerald-700">رقم التليفون / الواتساب * [إجباري]</label>
+                    <input type="text" id="empPhone" required placeholder="010xxxxxxxx (لتنبيهات الـ 24 ساعة وبيانات الموظف)" class="w-full border-2 border-emerald-400 rounded-lg p-2 font-bold">
                 </div>
                 <div>
                     <label class="block font-bold mb-1 text-rose-700">باسورد الحساب (Password) * [إجباري]</label>
                     <input type="text" id="empPassword" required placeholder="اكتب الباسورد هنا..." class="w-full border-2 border-rose-400 rounded-lg p-2 font-bold">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">رقم واتساب (اختياري - لتذكير الـ 24 ساعة)</label>
-                    <input type="text" id="empPhone" placeholder="اختياري..." class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">البريد الإلكتروني (اختياري)</label>
+                    <input type="email" id="empEmail" placeholder="اختياري..." class="w-full border rounded-lg p-2">
                 </div>
                 <div id="empSalaryWrapper">
-                    <label class="block font-semibold mb-1">المرتب الأساسي الشهري (اختياري)</label>
-                    <input type="number" id="empSalary" placeholder="0" class="w-full border rounded-lg p-2">
+                    <label class="block font-semibold mb-1">المرتب الأساسي الشهري (ج.م)</label>
+                    <input type="number" id="empSalary" value="0" class="w-full border rounded-lg p-2">
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('addEmployeeModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
@@ -536,7 +581,7 @@
             <h3 class="font-bold text-lg border-b pb-2">تسجيل سلفة فورية أو بونص</h3>
             <form onsubmit="saveEmpFinancial(event)" class="space-y-3 text-sm">
                 <div>
-                    <label class="block font-semibold mb-1">اسم الموظف *</label>
+                    <label class="block font-semibold mb-1">اختر الاسم *</label>
                     <select id="finEmpId" required class="w-full border rounded-lg p-2 bg-white"></select>
                 </div>
                 <div>
@@ -604,7 +649,7 @@
         let compressedImageDataUrl = "";
         let isTreasuryUnlocked = false;
         let selectedEmployeeHistoryId = null;
-        let state = { employees: [], deals: [], empFinancials: [], treasury: [], users: [] };
+        let state = { employees: [], deals: [], empFinancials: [], treasury: [], users: [], waInstances: [] };
 
         const SWISS_BRANDS = [
             "Rolex (رولكس)", "Patek Philippe (باتيك فيليب)", "Audemars Piguet - AP (أوديمار بيجيه)",
@@ -713,12 +758,13 @@
 
         async function loadAllData() {
             if (!db || !currentUser) return;
-            const [empRes, dealRes, finRes, trRes, usrRes] = await Promise.all([
+            const [empRes, dealRes, finRes, trRes, usrRes, waRes] = await Promise.all([
                 db.from('employees').select('*').order('created_at', { ascending: false }),
                 db.from('deals').select('*').order('created_at', { ascending: false }),
                 db.from('employee_financials').select('*').order('transaction_date', { ascending: false }),
                 db.from('treasury_transactions').select('*').order('transaction_date', { ascending: false }),
-                db.from('app_users').select('*').order('created_at', { ascending: false })
+                db.from('app_users').select('*').order('created_at', { ascending: false }),
+                db.from('whatsapp_instances').select('*').order('id', { ascending: true })
             ]);
 
             state.employees = empRes.data || [];
@@ -726,12 +772,91 @@
             state.empFinancials = finRes.data || [];
             state.treasury = trRes.data || [];
             state.users = usrRes.data || [];
+            state.waInstances = waRes.data || [];
 
             renderAll();
         }
 
         // =========================================================================
-        // 2. البروفايل وإعدادات الحساب الشخصي (Profile & Settings)
+        // 2. إدارة أرقام واتساب الشركة الـ 10 (Company WhatsApp Numbers)
+        // =========================================================================
+        async function saveWhatsappInstance(e) {
+            e.preventDefault();
+            const instance_name = document.getElementById('waInstanceName').value.trim();
+            const phone_number = document.getElementById('waPhoneNumber').value.trim();
+            const status = document.getElementById('waStatus').value;
+
+            const { error } = await db.from('whatsapp_instances').insert([{
+                instance_name,
+                phone_number,
+                status
+            }]);
+
+            if (error) return alert("❌ خطأ في حفظ رقم الشركة (ربما الاسم أو الرقم مكرر): " + error.message);
+
+            showToast(`📱 تم إضافة خط واتساب الشركة (${instance_name}) بنجاح!`, 'success');
+            e.target.reset();
+            closeModal('addWhatsappModal');
+            await loadAllData();
+        }
+
+        async function toggleWaInstanceStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'connected' ? 'disconnected' : 'connected';
+            await db.from('whatsapp_instances').update({ status: newStatus }).eq('id', id);
+            await loadAllData();
+        }
+
+        function renderWhatsappInstances() {
+            // تحديث قائمة أرقام الشركة داخل نافذة الديل
+            const connectedNumbers = state.waInstances.filter(w => w.status === 'connected');
+            let waSelectHtml = `<option value="">🔄 توزيع تلقائي ذكي بين أرقام الشركة (${connectedNumbers.length} متصل)</option>`;
+            waSelectHtml += state.waInstances.map(w => `
+                <option value="${w.id}">📱 ${w.instance_name} (${w.phone_number}) ${w.status === 'connected' ? '🟢' : '🔴'}</option>
+            `).join('');
+            const dealWaSelect = document.getElementById('dealWhatsappInstance');
+            if (dealWaSelect) dealWaSelect.innerHTML = waSelectHtml;
+
+            // عرض كروت أرقام الشركة في تبويب أرقام الواتساب
+            const grid = document.getElementById('waInstancesGrid');
+            if (!grid) return;
+
+            if (state.waInstances.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white p-8 rounded-2xl border text-center text-slate-400">
+                        لا توجد أرقام واتساب مضافة للشركة حالياً. اضغط على (+ إضافة رقم واتساب للشركة) لإضافة أرقام البيزنس الـ 10 الخاصة بك.
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = state.waInstances.map((w, idx) => {
+                const isConn = w.status === 'connected';
+                return `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-2 ${isConn ? 'border-emerald-500/60' : 'border-rose-300 bg-rose-50/20'} flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <span class="bg-slate-900 text-white text-xs font-extrabold px-2.5 py-1 rounded-lg">خط شركة #${idx + 1}</span>
+                            <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${isConn ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                                ${isConn ? '🟢 متصل (Connected)' : '🔴 فاصل (Disconnected)'}
+                            </span>
+                        </div>
+                        <h3 class="font-extrabold text-base text-slate-900 mt-3">${w.instance_name}</h3>
+                        <p class="text-sm text-emerald-700 font-bold mt-1">📱 ${w.phone_number}</p>
+                        <p class="text-[11px] text-slate-400 mt-2">آخر استخدام في الإرسال: ${w.last_used_at ? new Date(w.last_used_at).toLocaleString('ar-EG') : 'لم يُستخدم بعد'}</p>
+                    </div>
+                    <div class="flex justify-between items-center gap-2 mt-4 pt-3 border-t">
+                        <button onclick="toggleWaInstanceStatus(${w.id}, '${w.status}')" class="text-xs font-bold px-3 py-1.5 rounded-lg ${isConn ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'}">
+                            ${isConn ? 'تعطيل مؤقت' : 'تفعيل كمتصل'}
+                        </button>
+                        <button onclick="deleteRow('whatsapp_instances', ${w.id})" class="text-xs bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-1.5 rounded-lg font-bold">
+                            حذف الرقم
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // =========================================================================
+        // 3. البروفايل وإعدادات الحساب الشخصي (Profile & Settings)
         // =========================================================================
         function openProfileModal() {
             document.getElementById('profName').value = currentUser.full_name || '';
@@ -746,8 +871,10 @@
             const full_name = document.getElementById('profName').value.trim();
             const rawEmail = document.getElementById('profEmail').value.trim();
             const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
-            const phone = document.getElementById('profPhone').value.trim() || '';
+            const phone = document.getElementById('profPhone').value.trim();
             const password_hash = document.getElementById('profPassword').value.trim();
+
+            if (!phone) return alert("⚠️ رقم التليفون / الواتساب مطلوب!");
 
             const { data: updatedUser, error } = await db
                 .from('app_users')
@@ -772,7 +899,7 @@
         }
 
         // =========================================================================
-        // 3. نظام حماية الخزنة بباسورد + التوقيت المحلي
+        // 4. نظام حماية الخزنة بباسورد + التوقيت المحلي
         // =========================================================================
         function getSavedTreasuryPassword() {
             const lockRecord = state.users.find(u => u.email === 'treasury@mrc.lock');
@@ -863,7 +990,7 @@
         }
 
         // =========================================================================
-        // 4. القائمة الذكية للساعات السويسرية (Scroll + Search) ومعاينة الواتساب
+        // 5. القائمة الذكية للساعات السويسرية (Scroll + Search) ومعاينة الواتساب
         // =========================================================================
         function toggleWatchDropdown() {
             const menu = document.getElementById('watchDropdownMenu');
@@ -913,10 +1040,6 @@
                 customInput.value = '';
             }
             updateWhatsAppPreview();
-        }
-
-        function handleWatchBrandChange(val) {
-            selectWatchBrandOption(val);
         }
 
         function getSelectedWatchBrand() {
@@ -992,6 +1115,7 @@
             document.getElementById('oldAmountPaid').value = "0";
             document.getElementById('amountPaid').disabled = false;
             document.getElementById('dealStatus').value = 'in_progress';
+            document.getElementById('dealWhatsappInstance').value = '';
             selectWatchBrandOption('');
             document.getElementById('dealModalTitle').textContent = "تسجيل ديل / ساعة جديدة";
             document.getElementById('imagePreview').classList.add('hidden');
@@ -1025,6 +1149,7 @@
 
             const myEmp = state.employees.find(e => e.user_id === currentUser.id);
             document.getElementById('dealEmployee').value = d.employee_id || (myEmp ? myEmp.id : '');
+            document.getElementById('dealWhatsappInstance').value = d.whatsapp_instance_id || '';
 
             document.getElementById('dealDetails').value = d.deal_details || '';
             document.getElementById('amountRequested').value = d.amount_requested || 0;
@@ -1086,10 +1211,12 @@
 
             const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
             const selectedEmpId = document.getElementById('dealEmployee').value || (myEmp ? myEmp.id : null);
+            const selectedWaId = document.getElementById('dealWhatsappInstance').value;
             const watchBrand = getSelectedWatchBrand();
 
             const dealPayload = {
                 employee_id: selectedEmpId,
+                whatsapp_instance_id: selectedWaId ? Number(selectedWaId) : null,
                 client_name: document.getElementById('clientName').value.trim(),
                 client_phone: document.getElementById('clientPhone').value.trim(),
                 client_location: document.getElementById('clientLocation').value.trim(),
@@ -1133,7 +1260,7 @@
         }
 
         // =========================================================================
-        // 5. إنشاء حساب (موظف / أونر) + تفاعل كروت الموظفين وإغلاق القوائم
+        // 6. إنشاء حساب (موظف / أونر) مع إلزامية الاسم ورقم التليفون والباسورد
         // =========================================================================
         function toggleSalaryFieldByRole(role) {
             document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
@@ -1142,16 +1269,19 @@
         async function ownerCreateEmployee(e) {
             e.preventDefault();
             const role = document.getElementById('empRole').value;
+            const full_name = document.getElementById('empName').value.trim();
+            const phone_whatsapp = document.getElementById('empPhone').value.trim();
             const password_hash = document.getElementById('empPassword').value.trim();
-            if (!password_hash) return alert("⚠️ كلمة المرور (Password) مطلوبة!");
 
-            const rawName = document.getElementById('empName').value.trim();
-            const full_name = rawName || (role === 'owner' ? `أونر_${Date.now().toString().slice(-3)}` : `موظف_${Date.now().toString().slice(-3)}`);
+            if (!full_name || !phone_whatsapp || !password_hash) {
+                return alert("⚠️ الاسم، رقم التليفون (الواتساب)، والباسورد خانات إجبارية!");
+            }
+
             const rawEmail = document.getElementById('empEmail').value.trim();
             const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
-            const phone_whatsapp = document.getElementById('empPhone').value.trim() || '';
-            const base_salary = Number(document.getElementById('empSalary').value || 0);
+            const base_salary = role === 'owner' ? 0 : Number(document.getElementById('empSalary').value || 0);
 
+            // 1. حفظ الحساب في جدول الدخول app_users
             const { data: userAcc, error: userErr } = await db
                 .from('app_users')
                 .insert([{ full_name, email, phone: phone_whatsapp, password_hash, role }])
@@ -1160,16 +1290,27 @@
 
             if (userErr) return alert("❌ خطأ في إنشاء الحساب: " + userErr.message);
 
-            if (role === 'employee') {
-                const { error: empErr } = await db
-                    .from('employees')
-                    .insert([{ user_id: userAcc.id, full_name, phone_whatsapp, base_salary }]);
-                if (empErr) return alert("❌ خطأ في حفظ سجل الموظف: " + empErr.message);
-            }
+            // 2. حفظ كارت الحساب في جدول employees (للأونر والموظف معاً ليظهر الكارت المميز لكل منهما)
+            const { error: empErr } = await db
+                .from('employees')
+                .insert([{ user_id: userAcc.id, full_name, phone_whatsapp, base_salary }]);
 
-            showToast(`✅ تم إنشاء حساب (${full_name}) بصلاحية (${role === 'owner' ? 'أونر' : 'موظف'})! يمكنه الدخول باسمه الآن.`, 'success');
+            if (empErr) return alert("❌ خطأ في حفظ كارت البيانات: " + empErr.message);
+
+            showToast(`✅ تم إنشاء حساب (${full_name}) بصلاحية (${role === 'owner' ? '👑 أونر' : '💼 موظف'}) بنجاح!`, 'success');
             e.target.reset();
             closeModal('addEmployeeModal');
+            await loadAllData();
+        }
+
+        async function deleteEmployeeAndUser(empId, userId) {
+            if (!confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) return;
+            if (userId) {
+                const { error } = await db.from('app_users').delete().eq('id', userId);
+                if (error) return alert("❌ لا يمكن حذف هذا الحساب: " + error.message);
+            }
+            await db.from('employees').delete().eq('id', empId);
+            if (selectedEmployeeHistoryId === empId) selectedEmployeeHistoryId = null;
             await loadAllData();
         }
 
@@ -1190,7 +1331,6 @@
         }
 
         function handleOutsideClick(event) {
-            // إغلاق قائمة الساعات المنسدلة عند الضغط خارجها
             const watchContainer = document.getElementById('watchBrandDropdownContainer');
             const watchMenu = document.getElementById('watchDropdownMenu');
             if (watchContainer && watchMenu && !watchMenu.classList.contains('hidden')) {
@@ -1199,7 +1339,6 @@
                 }
             }
 
-            // إغلاق سجل الموظف عند الضغط خارج الكارت وخارج الجدول
             if (!selectedEmployeeHistoryId) return;
             const clickedInsideCard = event.target.closest('.emp-card-item');
             const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
@@ -1250,7 +1389,7 @@
             if (error) return alert("❌ خطأ أثناء التسجيل: " + error.message);
 
             const emp = state.employees.find(x => x.id === employee_id);
-            const actionTitle = transaction_type === 'loan' ? 'سحب سلفة للموظف' : 'صرف بونص (مكافأة) للموظف';
+            const actionTitle = transaction_type === 'loan' ? 'سحب سلفة' : 'صرف بونص (مكافأة)';
             const noteText = notes ? ` - البيان: ${notes}` : '';
 
             await db.from('treasury_transactions').insert([{
@@ -1276,7 +1415,7 @@
             if (type === 'out') {
                 const currentBalance = getCurrentTreasuryBalance();
                 if (currentBalance < amount) {
-                    return alert(`⚠️️ لا يمكن صرف هذا المبلغ لأن رصيد الخزنة غير كافي!\n\nالمبلغ المراد صرفه: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م`);
+                    return alert(`⚠️ لا يمكن صرف هذا المبلغ لأن رصيد الخزنة غير كافي!\n\nالمبلغ المراد صرفه: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م`);
                 }
             }
 
@@ -1328,7 +1467,7 @@
         }
 
         // =========================================================================
-        // عرض الجداول (Rendering)
+        // عرض الجداول والكروت المميزة (Rendering)
         // =========================================================================
         function renderDeals(query = '') {
             const tbody = document.getElementById('dealsTableBody');
@@ -1352,6 +1491,7 @@
 
             tbody.innerHTML = list.map(d => {
                 const emp = state.employees.find(e => e.id === d.employee_id);
+                const waInst = state.waInstances.find(w => w.id === d.whatsapp_instance_id);
                 let badge = '';
                 let rowBgClass = 'hover:bg-slate-50';
                 let actionButtons = '';
@@ -1364,7 +1504,7 @@
                             <span class="whitespace-nowrap text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
                                 ✔️ الديل منتهي (Done)
                             </span>
-                            <button onclick="openEditDeal('${d.id}')" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold">✏️ تعديل الديل</button>
+                            <button onclick="openEditDeal('${d.id}')" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold">✏️️ تعديل الديل</button>
                             <button onclick="deleteRow('deals', '${d.id}')" class="w-full text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 } else if (d.status === 'cancelled') {
@@ -1414,6 +1554,7 @@
                     </td>
                     <td class="p-3.5 text-xs">
                         <div class="font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 font-bold">📲 خط الإرسال: ${waInst ? waInst.instance_name : 'توزيع تلقائي'}</div>
                         ${d.reminder_message ? `<div class="mt-1 text-[10px] bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200 max-w-[180px] truncate" title="${d.reminder_message}">💬 ${d.reminder_message}</div>` : ''}
                     </td>
                     <td class="p-3.5">${imageHtml}</td>
@@ -1426,34 +1567,81 @@
             }).join('');
         }
 
+        // عرض كروت مميزة للأونر وكروت للموظفين
         function renderEmployees() {
             const opts = state.employees.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
-            document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر الموظف --</option>` + opts;
+            document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر المسؤول --</option>` + opts;
             document.getElementById('finEmpId').innerHTML = opts;
 
-            document.getElementById('employeesCardsContainer').innerHTML = state.employees.map(emp => {
+            // ترتيب الكروت بحيث يظهر الأونر في البداية ثم الموظفين
+            const sortedList = [...state.employees].sort((a, b) => {
+                const uA = state.users.find(u => u.id === a.user_id);
+                const uB = state.users.find(u => u.id === b.user_id);
+                const roleA = uA ? uA.role : 'employee';
+                const roleB = uB ? uB.role : 'employee';
+                return roleA === 'owner' && roleB !== 'owner' ? -1 : 1;
+            });
+
+            document.getElementById('employeesCardsContainer').innerHTML = sortedList.map(emp => {
+                const linkedUser = state.users.find(u => u.id === emp.user_id);
+                const isOwnerCard = linkedUser && linkedUser.role === 'owner';
+
                 const recs = state.empFinancials.filter(f => f.employee_id === emp.id);
                 const loans = recs.filter(f => f.transaction_type === 'loan').reduce((s, f) => s + Number(f.amount), 0);
                 const bonus = recs.filter(f => f.transaction_type === 'bonus').reduce((s, f) => s + Number(f.amount), 0);
                 const net = Number(emp.base_salary) + bonus - loans;
                 const isSelected = selectedEmployeeHistoryId === emp.id;
 
+                if (isOwnerCard) {
+                    // 👑 تصميم كارت الأونر المميز (كحلي ملكي بحواف ذهبية)
+                    return `
+                    <div onclick="toggleEmployeeCardHistory('${emp.id}', event)"
+                         class="emp-card-item cursor-pointer bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 rounded-2xl shadow-lg border-2 transition ${isSelected ? 'border-amber-400 ring-4 ring-amber-300/40' : 'border-amber-500/80 hover:border-amber-400'}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="inline-block bg-amber-500 text-slate-950 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5 shadow">
+                                    👑 حساب أونر (Owner)
+                                </span>
+                                <h3 class="font-extrabold text-base text-amber-300 flex items-center gap-2">
+                                    <span>${emp.full_name}</span>
+                                    <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-amber-200'}">
+                                        ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-slate-300 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
+                            </div>
+                            ${currentUser.role === 'owner' && emp.user_id !== currentUser.id ? `
+                                <button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-600 hover:text-white px-2.5 py-1 rounded-lg font-bold">حذف</button>
+                            ` : ''}
+                        </div>
+                        <div class="mt-4 space-y-1 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-700">
+                            <div class="flex justify-between text-slate-300"><span>الصلاحية:</span><b class="text-amber-400">تحكم كامل في النظام والخزنة</b></div>
+                            <div class="flex justify-between text-emerald-400"><span>إجمالي المكافآت المسجلة:</span><b>${bonus.toLocaleString()} ج.م</b></div>
+                            <div class="flex justify-between text-rose-400"><span>إجمالي المسحوبات/السلف:</span><b>${loans.toLocaleString()} ج.م</b></div>
+                        </div>
+                    </div>`;
+                }
+
+                // 💼 تصميم كارت الموظف
                 return `
                 <div onclick="toggleEmployeeCardHistory('${emp.id}', event)"
-                     class="emp-card-item cursor-pointer bg-white p-5 rounded-xl shadow-sm border-2 transition ${isSelected ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50/20' : 'border-slate-200 hover:border-blue-400'}">
+                     class="emp-card-item cursor-pointer bg-white p-5 rounded-2xl shadow-sm border-2 transition ${isSelected ? 'border-blue-600 ring-2 ring-blue-200 bg-blue-50/20' : 'border-slate-200 hover:border-blue-400'}">
                     <div class="flex justify-between items-start">
                         <div>
+                            <span class="inline-block bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full mb-1.5">
+                                💼 موظف (Employee)
+                            </span>
                             <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
-                                <span>👤 ${emp.full_name}</span>
+                                <span>${emp.full_name}</span>
                                 <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
                                     ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
                                 </span>
                             </h3>
-                            <p class="text-xs text-slate-500 mt-0.5">واتساب: ${emp.phone_whatsapp || 'غير مسجل'}</p>
+                            <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
                         </div>
-                        ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteRow('employees', '${emp.id}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
+                        ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
                     </div>
-                    <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-lg">
+                    <div class="mt-3 space-y-1 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <div class="flex justify-between"><span>المرتب الأساسي:</span><b>${Number(emp.base_salary).toLocaleString()} ج.م</b></div>
                         <div class="flex justify-between text-emerald-700"><span>+ إجمالي البونص:</span><b>${bonus.toLocaleString()} ج.م</b></div>
                         <div class="flex justify-between text-rose-600"><span>- إجمالي السلف المسحوبة:</span><b>${loans.toLocaleString()} ج.م</b></div>
@@ -1467,11 +1655,11 @@
                 const selectedEmp = state.employees.find(e => e.id === selectedEmployeeHistoryId);
                 if (selectedEmp) {
                     historyBox.classList.remove('hidden');
-                    document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بالموظف: (${selectedEmp.full_name})`;
+                    document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بـ: (${selectedEmp.full_name})`;
                     const empRecs = state.empFinancials.filter(f => f.employee_id === selectedEmployeeHistoryId);
 
                     if (empRecs.length === 0) {
-                        document.getElementById('empFinancialsTableBody').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-slate-400">لا توجد سلف أو مكافآت مسجلة لهذا الموظف</td></tr>`;
+                        document.getElementById('empFinancialsTableBody').innerHTML = `<tr><td colspan="6" class="p-5 text-center text-slate-400">لا توجد سلف أو مكافآت مسجلة</td></tr>`;
                     } else {
                         document.getElementById('empFinancialsTableBody').innerHTML = empRecs.map(f => `
                             <tr>
@@ -1552,8 +1740,8 @@
                 <tr>
                     <td class="p-3 font-bold">${u.full_name}</td>
                     <td class="p-3">${u.email && !u.email.endsWith('@mrc.local') ? u.email : '<span class="text-xs text-slate-400">يدخل بالاسم فقط</span>'}</td>
-                    <td class="p-3">${u.phone || '-'}</td>
-                    <td class="p-3 font-bold">${u.role === 'owner' ? '👑 أونر' : '💼 موظف'}</td>
+                    <td class="p-3 font-semibold text-emerald-700">${u.phone || '-'}</td>
+                    <td class="p-3 font-bold">${u.role === 'owner' ? '<span class="bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full text-xs">👑 أونر</span>' : '<span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs">💼 موظف</span>'}</td>
                     <td class="p-3 text-xs">${new Date(u.created_at).toLocaleString('ar-EG')}</td>
                     <td class="p-3">${u.role !== 'owner' ? `<button onclick="deleteRow('app_users', '${u.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف الحساب</button>` : '-'}</td>
                 </tr>
@@ -1562,6 +1750,7 @@
 
         function renderAll() {
             if (!currentUser) return;
+            renderWhatsappInstances();
             renderDeals(document.getElementById('dealSearchInput').value);
             renderEmployees();
             renderTreasury();
@@ -1572,8 +1761,9 @@
             if (pageId === 'treasury' && !isTreasuryUnlocked) {
                 return requestTreasuryAccess();
             }
-            ['deals', 'employees', 'treasury', 'users'].forEach(p => {
-                document.getElementById(`page-${p}`).classList.add('hidden');
+            ['deals', 'employees', 'treasury', 'whatsapp', 'users'].forEach(p => {
+                const sec = document.getElementById(`page-${p}`);
+                if (sec) sec.classList.add('hidden');
                 const btn = document.getElementById(`tab-${p}`);
                 if (btn) { btn.classList.remove('tab-active'); btn.classList.add('text-slate-300'); }
             });
