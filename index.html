@@ -363,7 +363,7 @@
         </div>
     </div>
 
-    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (متاحة للموظف والأونر بالكامل) -->
+    <!-- 1. نافذة إضافة / تعديل وتخليص ديل (مع القائمة الذكية القابلة للـ Scroll والبحث) -->
     <div id="dealModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto">
             <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل بيانات عميل وديل جديد</h3>
@@ -387,34 +387,31 @@
                     </div>
                 </div>
 
-                <!-- نوع الساعة السويسرية (قائمة جاهزة + كتابة يدوية) والموظف -->
+                <!-- نوع الساعة السويسرية (قائمة منسدلة قابلة للـ Scroll والبحث + كتابة يدوية) والموظف -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-blue-50/60 p-3 rounded-xl border border-blue-200">
-                    <div>
+                    <div class="relative" id="watchBrandDropdownContainer">
                         <label class="block font-bold mb-1 text-blue-900">⌚ نوع الساعة (السويسرية)</label>
-                        <select id="watchBrandSelect" onchange="handleWatchBrandChange(this.value)" class="w-full border rounded-lg p-2 bg-white font-semibold">
-                            <option value="">-- اختر ماركة الساعة --</option>
-                            <option value="Rolex (رولكس)">Rolex (رولكس)</option>
-                            <option value="Patek Philippe (باتيك فيليب)">Patek Philippe (باتيك فيليب)</option>
-                            <option value="Audemars Piguet - AP (أوديمار بيجيه)">Audemars Piguet - AP (أوديمار بيجيه)</option>
-                            <option value="Omega (أوميجا)">Omega (أوميجا)</option>
-                            <option value="Cartier (كارتييه)">Cartier (كارتييه)</option>
-                            <option value="Vacheron Constantin (فاشيرون كونستانتين)">Vacheron Constantin (فاشيرون كونستانتين)</option>
-                            <option value="Richard Mille (ريتشارد ميل)">Richard Mille (ريتشارد ميل)</option>
-                            <option value="Breitling (بريتلينج)">Breitling (بريتلينج)</option>
-                            <option value="Hublot (هوبلو)">Hublot (هوبلو)</option>
-                            <option value="IWC Schaffhausen">IWC Schaffhausen</option>
-                            <option value="TAG Heuer (تاج هوير)">TAG Heuer (تاج هوير)</option>
-                            <option value="Jaeger-LeCoultre">Jaeger-LeCoultre</option>
-                            <option value="Panerai (بانيراي)">Panerai (بانيراي)</option>
-                            <option value="Tudor (تيودور)">Tudor (تيودور)</option>
-                            <option value="Longines (لونجين)">Longines (لونجين)</option>
-                            <option value="Tissot (تيسو)">Tissot (تيسو)</option>
-                            <option value="Hamilton (هاميلتون)">Hamilton (هاميلتون)</option>
-                            <option value="Rado (رادو)">Rado (رادو)</option>
-                            <option value="custom">➕ نوع آخر (اكتبه يدوياً)...</option>
-                        </select>
+                        <!-- زر فتح القائمة -->
+                        <div onclick="toggleWatchDropdown()" class="w-full border rounded-lg p-2 bg-white font-semibold flex justify-between items-center cursor-pointer">
+                            <span id="selectedWatchBrandLabel">-- اختر أو اكتب ماركة الساعة --</span>
+                            <span class="text-slate-400 text-xs">▼</span>
+                        </div>
+
+                        <!-- القائمة المنسدلة القابلة للـ Scroll والبحث -->
+                        <div id="watchDropdownMenu" class="hidden absolute left-0 right-0 mt-1 bg-white border-2 border-blue-500 rounded-xl shadow-2xl z-50 overflow-hidden">
+                            <div class="p-2 bg-slate-50 border-b">
+                                <input type="text" id="watchBrandSearchInput" oninput="filterWatchBrandsList(this.value)" placeholder="🔍 ابحث عن ماركة أو اكتب نوع جديد..." class="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-blue-600">
+                            </div>
+                            <div id="watchBrandsListItems" class="max-h-52 overflow-y-auto divide-y divide-slate-100 text-xs font-semibold">
+                                <!-- يتم ملؤها تلقائياً مع Scroll سلس -->
+                            </div>
+                        </div>
+
+                        <!-- خانة الكتابة اليدوية لو اختار نوع آخر -->
                         <input type="text" id="watchBrandCustom" oninput="updateWhatsAppPreview()" placeholder="اكتب نوع الساعة وموديلها يدوياً هنا..." class="hidden mt-2 w-full border-2 border-blue-500 rounded-lg p-2 bg-white font-bold">
+                        <input type="hidden" id="watchBrandSelect" value="">
                     </div>
+
                     <div>
                         <label class="block font-semibold mb-1">الموظف المسؤول عن الديل</label>
                         <select id="dealEmployee" class="w-full border rounded-lg p-2 bg-white"></select>
@@ -444,7 +441,7 @@
                     </div>
                 </div>
 
-                <!-- المعاد وحالة الديل (متاح للموظف والأونر) -->
+                <!-- المعاد وحالة الديل -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                         <label class="block font-semibold mb-1">⏰ المعاد المتفق عليه للتواصل أو المقابلة</label>
@@ -866,18 +863,60 @@
         }
 
         // =========================================================================
-        // 4. إدارة الساعات السويسرية، معاينة رسالة الواتساب، وتخليص/تعديل الديل
+        // 4. القائمة الذكية للساعات السويسرية (Scroll + Search) ومعاينة الواتساب
         // =========================================================================
-        function handleWatchBrandChange(val) {
+        function toggleWatchDropdown() {
+            const menu = document.getElementById('watchDropdownMenu');
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                document.getElementById('watchBrandSearchInput').value = '';
+                filterWatchBrandsList('');
+                setTimeout(() => document.getElementById('watchBrandSearchInput').focus(), 50);
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        function filterWatchBrandsList(query = '') {
+            const q = query.trim().toLowerCase();
+            const container = document.getElementById('watchBrandsListItems');
+            const filtered = SWISS_BRANDS.filter(b => b.toLowerCase().includes(q));
+
+            let html = `<div onclick="selectWatchBrandOption('')" class="p-2.5 hover:bg-blue-50 cursor-pointer text-slate-500">-- بدون تحديد ماركة --</div>`;
+            html += filtered.map(b => `
+                <div onclick="selectWatchBrandOption('${b}')" class="p-2.5 hover:bg-blue-50 cursor-pointer text-slate-800">${b}</div>
+            `).join('');
+
+            html += `
+                <div onclick="selectWatchBrandOption('custom', '${query.trim()}')" class="p-2.5 bg-blue-50 hover:bg-blue-100 cursor-pointer text-blue-700 font-extrabold">
+                    ➕ نوع آخر (إضافة يدوية)${query.trim() ? `: "${query.trim()}"` : '...'}
+                </div>`;
+
+            container.innerHTML = html;
+        }
+
+        function selectWatchBrandOption(val, prefillCustom = '') {
+            document.getElementById('watchBrandSelect').value = val;
+            document.getElementById('watchDropdownMenu').classList.add('hidden');
             const customInput = document.getElementById('watchBrandCustom');
+            const label = document.getElementById('selectedWatchBrandLabel');
+
             if (val === 'custom') {
+                label.textContent = '➕ نوع آخر (مكتوب يدوياً)';
                 customInput.classList.remove('hidden');
+                if (prefillCustom) customInput.value = prefillCustom;
                 customInput.focus();
             } else {
+                label.textContent = val || '-- اختر أو اكتب ماركة الساعة --';
                 customInput.classList.add('hidden');
                 customInput.value = '';
             }
             updateWhatsAppPreview();
+        }
+
+        function handleWatchBrandChange(val) {
+            selectWatchBrandOption(val);
         }
 
         function getSelectedWatchBrand() {
@@ -911,7 +950,6 @@
             }
         }
 
-        // متاحة للموظف والأونر: كتابة مبلغ يحول الديل لـ Done تلقائياً
         function onAmountPaidChange(val) {
             const paid = Number(val || 0);
             const statusSelect = document.getElementById('dealStatus');
@@ -936,7 +974,6 @@
             }
         }
 
-        // متاحة للموظف والأونر للرجوع للديل الملغي
         async function reopenCancelledDeal(dealId) {
             const d = state.deals.find(x => x.id === dealId);
             if (!d) return;
@@ -955,7 +992,7 @@
             document.getElementById('oldAmountPaid').value = "0";
             document.getElementById('amountPaid').disabled = false;
             document.getElementById('dealStatus').value = 'in_progress';
-            document.getElementById('watchBrandCustom').classList.add('hidden');
+            selectWatchBrandOption('');
             document.getElementById('dealModalTitle').textContent = "تسجيل ديل / ساعة جديدة";
             document.getElementById('imagePreview').classList.add('hidden');
             compressedImageDataUrl = "";
@@ -981,13 +1018,9 @@
 
             const savedBrand = d.watch_brand || '';
             if (!savedBrand || SWISS_BRANDS.includes(savedBrand)) {
-                document.getElementById('watchBrandSelect').value = savedBrand;
-                document.getElementById('watchBrandCustom').classList.add('hidden');
-                document.getElementById('watchBrandCustom').value = '';
+                selectWatchBrandOption(savedBrand);
             } else {
-                document.getElementById('watchBrandSelect').value = 'custom';
-                document.getElementById('watchBrandCustom').classList.remove('hidden');
-                document.getElementById('watchBrandCustom').value = savedBrand;
+                selectWatchBrandOption('custom', savedBrand);
             }
 
             const myEmp = state.employees.find(e => e.user_id === currentUser.id);
@@ -1030,7 +1063,6 @@
             let newPaid = Number(document.getElementById('amountPaid').value || 0);
             let status = document.getElementById('dealStatus').value;
 
-            // الموظف والأونر كلاهما يطبق عليهما منطق إتمام الديل
             if (newPaid > 0 && status === 'in_progress') {
                 status = 'completed';
                 document.getElementById('dealStatus').value = 'completed';
@@ -1101,7 +1133,7 @@
         }
 
         // =========================================================================
-        // 5. إنشاء حساب (موظف / أونر) + تفاعل كروت الموظفين
+        // 5. إنشاء حساب (موظف / أونر) + تفاعل كروت الموظفين وإغلاق القوائم
         // =========================================================================
         function toggleSalaryFieldByRole(role) {
             document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
@@ -1158,6 +1190,16 @@
         }
 
         function handleOutsideClick(event) {
+            // إغلاق قائمة الساعات المنسدلة عند الضغط خارجها
+            const watchContainer = document.getElementById('watchBrandDropdownContainer');
+            const watchMenu = document.getElementById('watchDropdownMenu');
+            if (watchContainer && watchMenu && !watchMenu.classList.contains('hidden')) {
+                if (!watchContainer.contains(event.target)) {
+                    watchMenu.classList.add('hidden');
+                }
+            }
+
+            // إغلاق سجل الموظف عند الضغط خارج الكارت وخارج الجدول
             if (!selectedEmployeeHistoryId) return;
             const clickedInsideCard = event.target.closest('.emp-card-item');
             const clickedInsideHistory = event.target.closest('#selectedEmployeeHistoryBox');
@@ -1234,7 +1276,7 @@
             if (type === 'out') {
                 const currentBalance = getCurrentTreasuryBalance();
                 if (currentBalance < amount) {
-                    return alert(`⚠️ لا يمكن صرف هذا المبلغ لأن رصيد الخزنة غير كافي!\n\nالمبلغ المراد صرفه: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م`);
+                    return alert(`⚠️️ لا يمكن صرف هذا المبلغ لأن رصيد الخزنة غير كافي!\n\nالمبلغ المراد صرفه: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة: ${currentBalance.toLocaleString()} ج.م`);
                 }
             }
 
@@ -1316,9 +1358,10 @@
 
                 if (d.status === 'completed') {
                     rowBgClass = 'bg-emerald-50/50 hover:bg-emerald-50';
-badge = `<span class="inline-block whitespace-nowrap bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">✅ تم الشراء (Done)</span>`;                    actionButtons = `
+                    badge = `<span class="inline-block whitespace-nowrap bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">✅ تم الشراء (Done)</span>`;
+                    actionButtons = `
                         <div class="flex flex-col gap-1.5 items-start">
-                            <span class=" whitespace-nowrap text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
+                            <span class="whitespace-nowrap text-xs font-extrabold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300 w-full text-center">
                                 ✔️ الديل منتهي (Done)
                             </span>
                             <button onclick="openEditDeal('${d.id}')" class="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg font-bold">✏️ تعديل الديل</button>
@@ -1326,18 +1369,20 @@ badge = `<span class="inline-block whitespace-nowrap bg-emerald-600 text-white p
                         </div>`;
                 } else if (d.status === 'cancelled') {
                     rowBgClass = 'bg-rose-50/40 hover:bg-rose-50/70';
-badge = `<span class="inline-block whitespace-nowrap bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق</span>`;                    actionButtons = `
+                    badge = `<span class="inline-block whitespace-nowrap bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-full text-xs font-extrabold">❌ لم يتم الاتفاق</span>`;
+                    actionButtons = `
                         <div class="flex flex-col gap-1.5">
-                            <button onclick="reopenCancelledDeal('${d.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
+                            <button onclick="reopenCancelledDeal('${d.id}')" class="whitespace-nowrap text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold shadow">
                                 🔄 الرجوع للديل مرة أخرى
                             </button>
                             <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold">✏️ تعديل البيانات</button>
                             <button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
                         </div>`;
                 } else {
-badge = `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;                    actionButtons = `
+                    badge = `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⏳ قيد التواصل</span>`;
+                    actionButtons = `
                         <div class="flex flex-col gap-1.5">
-                            <button onclick="openEditDeal('${d.id}')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
+                            <button onclick="openEditDeal('${d.id}')" class="whitespace-nowrap text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
                                 ✏️ تخليص / تعديل الديل
                             </button>
                             <button onclick="deleteRow('deals', '${d.id}')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-bold">حذف</button>
@@ -1400,8 +1445,8 @@ badge = `<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-800
                         <div>
                             <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
                                 <span>👤 ${emp.full_name}</span>
-                                <span class="text-[11px] px-2 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
-                                    ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (${recs.length})'}
+                                <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
+                                    ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + recs.length + ')'}
                                 </span>
                             </h3>
                             <p class="text-xs text-slate-500 mt-0.5">واتساب: ${emp.phone_whatsapp || 'غير مسجل'}</p>
