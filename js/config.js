@@ -19,7 +19,7 @@ function createDbClient(token) {
 let db = isConfigured ? createDbClient(sessionToken) : null;
 
 // الأعمدة المسموح بقرايتها من جدول المستخدمين (الباسورد مش متاح من الـ API)
-const APP_USER_COLUMNS = 'id, full_name, email, phone, role, created_at';
+const APP_USER_COLUMNS = 'id, full_name, email, phone, role, created_at, archived_at';
 
 // =========================================================================
 // المتغيرات العامة وحالة التطبيق (Global State)

@@ -52,16 +52,23 @@ async function ownerCreateEmployee(e) {
     await loadAllData();
 }
 
+// الحذف = أرشفة: الموظف بيختفي من القوائم ومايقدرش يدخل، لكن كل معاملاته بتفضل في السجل
 async function deleteEmployeeAndUser(empId, userId) {
-    if (!confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) return;
-    if (userId) {
-        // بيمسح الحساب وكارت الموظف المربوط بيه
-        const { error } = await db.rpc('app_delete_user', { p_user_id: userId });
-        if (error) return alert("❌ لا يمكن حذف هذا الحساب: " + error.message);
-    } else {
-        await db.from('employees').delete().eq('id', empId);
-    }
+    if (!confirm("الموظف هيتشال من القائمة ومش هيقدر يسجل دخول.\nكل سلفه وبونصاته وديلزه وحركات الخزنة بتاعته هتفضل محفوظة، وتقدر ترجّعه في أي وقت من (الموظفين المحذوفين).\n\nتكمل؟")) return;
+    const { error } = empId
+        ? await db.rpc('app_archive_employee', { p_emp_id: empId })
+        : await db.rpc('app_delete_user', { p_user_id: userId });
+    if (error) return alert("❌ لا يمكن حذف هذا الحساب: " + error.message);
     if (selectedEmployeeHistoryId === empId) selectedEmployeeHistoryId = null;
+    showToast("🗂️ تم حذف الموظف من القائمة، ومعاملاته محفوظة في السجل.", "info");
+    await loadAllData();
+}
+
+async function restoreEmployee(empId) {
+    const { error } = await db.rpc('app_restore_employee', { p_emp_id: empId });
+    if (error) return alert("❌ لا يمكن استرجاع الموظف: " + error.message);
+    const emp = state.employees.find(e => e.id === empId);
+    showToast(`♻️ تم استرجاع (${esc(emp ? emp.full_name : '')}) بكل معاملاته، ويقدر يسجل دخول تاني.`, "success");
     await loadAllData();
 }
 
@@ -130,11 +137,15 @@ async function saveEmpFinancial(e) {
 }
 
 function renderEmployees() {
-    const opts = state.employees.map(e => `<option value="${e.id}">${esc(e.full_name)}</option>`).join('');
-    document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر المسؤول --</option>` + opts;
+    const activeEmployees = state.employees.filter(e => !e.archived_at);
+    const archivedEmployees = state.employees.filter(e => e.archived_at);
+    const opts = activeEmployees.map(e => `<option value="${e.id}">${esc(e.full_name)}</option>`).join('');
+    // المحذوفين بيظهروا (من غير ما يتختاروا) عشان الديلز القديمة تفضل محتفظة باسم مسؤولها
+    const archivedOpts = archivedEmployees.map(e => `<option value="${e.id}" disabled>${esc(e.full_name)} (محذوف)</option>`).join('');
+    document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر المسؤول --</option>` + opts + archivedOpts;
     document.getElementById('finEmpId').innerHTML = opts;
 
-    const sortedList = [...state.employees].sort((a, b) => {
+    const sortedList = [...activeEmployees].sort((a, b) => {
         const uA = state.users.find(u => u.id === a.user_id);
         const uB = state.users.find(u => u.id === b.user_id);
         const roleA = uA ? uA.role : 'employee';
@@ -220,13 +231,15 @@ function renderEmployees() {
         </div>`;
     }).join('');
 
+    renderArchivedEmployees(archivedEmployees);
+
     const historyBox = document.getElementById('selectedEmployeeHistoryBox');
     if (selectedEmployeeHistoryId) {
         const selectedEmp = state.employees.find(e => e.id === selectedEmployeeHistoryId);
         if (selectedEmp) {
             const cycleStart = getEmployeeCycleStartDate(selectedEmp.created_at);
             historyBox.classList.remove('hidden');
-            document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بـ: (${selectedEmp.full_name})`;
+            document.getElementById('selectedEmpHistoryTitle').textContent = `📅 سجل السلف والبونص الخاص بـ: (${selectedEmp.full_name})${selectedEmp.archived_at ? ' — 🗂️ محذوف' : ''}`;
             const empRecs = state.empFinancials.filter(f => f.employee_id === selectedEmployeeHistoryId);
 
             if (empRecs.length === 0) {
@@ -257,4 +270,35 @@ function renderEmployees() {
     } else {
         historyBox.classList.add('hidden');
     }
+}
+function renderArchivedEmployees(archivedEmployees) {
+    const box = document.getElementById('archivedEmployeesBox');
+    if (!box) return;
+    if (currentUser.role !== 'owner' || archivedEmployees.length === 0) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+    }
+    box.classList.remove('hidden');
+    box.innerHTML = `
+        <details class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <summary class="cursor-pointer font-extrabold text-slate-700">🗂️ الموظفين المحذوفين (${archivedEmployees.length}) — معاملاتهم محفوظة</summary>
+            <div class="mt-3 space-y-2">
+                ${archivedEmployees.map(emp => {
+                    const recsCount = state.empFinancials.filter(f => f.employee_id === emp.id).length;
+                    const dealsCount = state.deals.filter(d => d.employee_id === emp.id).length;
+                    return `
+                    <div class="flex flex-wrap items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl p-3">
+                        <div>
+                            <div class="font-bold text-slate-800">${esc(emp.full_name)}</div>
+                            <div class="text-[11px] text-slate-500">📱 ${esc(emp.phone_whatsapp) || 'غير مسجل'} · ${recsCount} سلفة/بونص · ${dealsCount} ديل · اتحذف ${new Date(emp.archived_at).toLocaleDateString('ar-EG')}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="toggleEmployeeCardHistory('${emp.id}', event)" class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-bold">📅 السجل</button>
+                            <button onclick="restoreEmployee('${emp.id}')" class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-lg font-bold">♻️ استرجاع</button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </details>`;
 }

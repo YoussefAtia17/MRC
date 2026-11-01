@@ -186,7 +186,7 @@ async function saveProfileSettings(e) {
 }
 
 function renderUsers() {
-    const visibleUsers = state.users.filter(u => !SYSTEM_LOCK_EMAILS.includes(u.email));
+    const visibleUsers = state.users.filter(u => !SYSTEM_LOCK_EMAILS.includes(u.email) && !u.archived_at);
     document.getElementById('usersTableBody').innerHTML = visibleUsers.map(u => `
         <tr>
             <td class="p-3 font-bold">${esc(u.full_name)}</td>
