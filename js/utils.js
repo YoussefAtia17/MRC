@@ -2,6 +2,11 @@
 // الدوال المساعدة المشتركة (Utilities & UI Helpers)
 // =========================================================================
 
+// تأمين النصوص قبل عرضها جوه HTML (منع XSS)
+function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const colors = {
@@ -88,7 +93,9 @@ function compressAndPreviewImage(event) {
 
 async function deleteRow(table, id) {
     if (!confirm("هل أنت متأكد من الحذف النهائي؟")) return;
-    await db.from(table).delete().eq('id', id);
+    const { data, error } = await db.from(table).delete().eq('id', id).select('id');
+    if (error) return alert("❌ لا يمكن الحذف: " + error.message);
+    if (!data || data.length === 0) return alert("⛔ مش مسموح لك تحذف السجل ده (صلاحية الأونر بس).");
     await loadAllData();
 }
 

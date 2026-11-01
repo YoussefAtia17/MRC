@@ -64,7 +64,7 @@ async function saveWhatsappInstance(e) {
         return alert("❌ خطأ في حفظ رقم الشركة: " + error.message);
     }
 
-    showToast(`📱 تم إضافة خط واتساب الشركة (${instance_name} - ${phone_number}) وظهوره في قائمة الديل!`, 'success');
+    showToast(`📱 تم إضافة خط واتساب الشركة (${esc(instance_name)} - ${esc(phone_number)}) وظهوره في قائمة الديل!`, 'success');
     e.target.reset();
     closeModal('addWhatsappModal');
     await loadAllData();
@@ -97,7 +97,7 @@ function renderWhatsappInstances() {
     const connectedNumbers = state.waInstances.filter(w => w.status === 'connected');
     let waSelectHtml = `<option value="">🔄 توزيع تلقائي ذكي بين أرقام الشركة (${connectedNumbers.length} متصل)</option>`;
     waSelectHtml += state.waInstances.map(w => `
-        <option value="${w.id}">📱 ${w.instance_name} - (${w.phone_number}) ${w.status === 'connected' ? '🟢' : '🔴'}</option>
+        <option value="${w.id}">📱 ${esc(w.instance_name)} - (${esc(w.phone_number)}) ${w.status === 'connected' ? '🟢' : '🔴'}</option>
     `).join('');
     const dealWaSelect = document.getElementById('dealWhatsappInstance');
     if (dealWaSelect) dealWaSelect.innerHTML = waSelectHtml;
@@ -129,12 +129,12 @@ function renderWhatsappInstances() {
                     </span>
                 </div>
                 <div class="flex justify-between items-center mt-3">
-                    <h3 class="font-extrabold text-base text-slate-900">${w.instance_name}</h3>
+                    <h3 class="font-extrabold text-base text-slate-900">${esc(w.instance_name)}</h3>
                     <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'}">
                         ${isSelected ? '▼ الصفقات مفتوحة' : '▶ عرض الصفقات (' + linkedDeals.length + ')'}
                     </span>
                 </div>
-                <p class="text-sm text-emerald-700 font-bold mt-1">📱 ${w.phone_number}</p>
+                <p class="text-sm text-emerald-700 font-bold mt-1">📱 ${esc(w.phone_number)}</p>
                 <p class="text-[11px] text-slate-500 mt-2 font-semibold">📋 عدد الـ Deals المربوطة بالرقم: <b class="text-slate-900">${linkedDeals.length} ديل</b></p>
             </div>
             <div class="flex justify-between items-center gap-2 mt-4 pt-3 border-t" onclick="event.stopPropagation()">
@@ -178,16 +178,16 @@ function renderWhatsappInstances() {
                     return `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3">
-                            <div class="font-bold text-slate-900">${d.client_name}</div>
-                            <div class="text-xs text-emerald-600 font-bold">📱 ${d.client_phone}</div>
+                            <div class="font-bold text-slate-900">${esc(d.client_name)}</div>
+                            <div class="text-xs text-emerald-600 font-bold">📱 ${esc(d.client_phone)}</div>
                         </td>
                         <td class="p-3">
-                            <div class="font-extrabold text-blue-800 text-xs">${d.watch_brand ? '⌚ ' + d.watch_brand : '-'}</div>
-                            <div class="text-xs text-slate-600 mt-0.5">${d.deal_details}</div>
+                            <div class="font-extrabold text-blue-800 text-xs">${esc(d.watch_brand) ? '⌚ ' + esc(d.watch_brand) : '-'}</div>
+                            <div class="text-xs text-slate-600 mt-0.5">${esc(d.deal_details)}</div>
                         </td>
                         <td class="p-3">
                             ${roleBadge}
-                            ${emp && d.assigned_by_name && emp.full_name !== d.assigned_by_name ? `<div class="text-[10px] text-slate-500 mt-1">مسؤول الديل: ${emp.full_name}</div>` : ''}
+                            ${emp && esc(d.assigned_by_name) && esc(emp.full_name) !== esc(d.assigned_by_name) ? `<div class="text-[10px] text-slate-500 mt-1">مسؤول الديل: ${esc(emp.full_name)}</div>` : ''}
                         </td>
                         <td class="p-3 text-xs font-semibold text-blue-700">
                             ${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}
@@ -228,6 +228,7 @@ async function verifyTreasuryPassword(e) {
 
     if (isValid) {
         isTreasuryUnlocked = true;
+        await loadAllData();
         closeModal('treasuryPasswordModal');
         switchPage('treasury');
         renderTreasury();
@@ -237,8 +238,10 @@ async function verifyTreasuryPassword(e) {
     }
 }
 
-function lockTreasury() {
+async function lockTreasury() {
     isTreasuryUnlocked = false;
+    state.treasury = [];
+    await db.rpc('app_lock_treasury');
     switchPage('deals');
     showToast("🔒 تم قفل الخزنة", "info");
 }
@@ -324,7 +327,7 @@ function renderTreasury() {
         <tr>
             <td class="p-3.5 font-bold ${t.transaction_type === 'in' ? 'text-emerald-600' : 'text-rose-600'}">${t.transaction_type === 'in' ? '🟢 دخلت الخزنة' : '🔴 اتصرفت من الخزنة'}</td>
             <td class="p-3.5 font-extrabold">${Number(t.amount).toLocaleString()} ج.م</td>
-            <td class="p-3.5">${t.description}</td>
+            <td class="p-3.5">${esc(t.description)}</td>
             <td class="p-3.5 text-xs">${new Date(t.transaction_date || t.created_at).toLocaleString('ar-EG')}</td>
             <td class="p-3.5 ${currentUser.role === 'owner' ? '' : 'hidden'}">
                 <button onclick="deleteRow('treasury_transactions', '${t.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف</button>

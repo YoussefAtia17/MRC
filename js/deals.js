@@ -173,7 +173,7 @@ async function reopenCancelledDeal(dealId) {
     const { error } = await db.from('deals').update({ status: 'in_progress' }).eq('id', dealId);
     if (error) return alert("❌ خطأ: " + error.message);
 
-    showToast(`🔄 تم الرجوع لديل العميل (${d.client_name}) وفتحه من جديد!`, "info");
+    showToast(`🔄 تم الرجوع لديل العميل (${esc(d.client_name)}) وفتحه من جديد!`, "info");
     await loadAllData();
     openEditDeal(dealId);
 }
@@ -280,7 +280,8 @@ async function saveDeal(e) {
 
     const diffPaid = newPaid - oldPaid;
 
-    if (diffPaid > 0) {
+    // الرصيد بيتشيّك على السيرفر دايماً، وهنا بس لو الخزنة مفتوحة عشان رسالة أوضح
+    if (diffPaid > 0 && isTreasuryUnlocked) {
         const currentBalance = getCurrentTreasuryBalance();
         if (currentBalance < diffPaid) {
             return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المدفوع في الديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
@@ -311,8 +312,7 @@ async function saveDeal(e) {
         status: status
     };
 
-    let savedDealId = editId;
-
+    // حركة الخزنة (صرف أو استرجاع الفرق) بتتسجل تلقائياً على السيرفر مع تشييك الرصيد
     if (editId) {
         const { error } = await db.from('deals').update(dealPayload).eq('id', editId);
         if (error) {
@@ -322,25 +322,13 @@ async function saveDeal(e) {
             if (retry.error) return alert("❌ خطأ أثناء تحديث الديل: " + retry.error.message);
         }
     } else {
-        const { data: insertedDeal, error } = await db.from('deals').insert([dealPayload]).select().single();
+        const { error } = await db.from('deals').insert([dealPayload]);
         if (error) {
             delete dealPayload.assigned_by_name;
             delete dealPayload.assigned_by_role;
-            const retry = await db.from('deals').insert([dealPayload]).select().single();
+            const retry = await db.from('deals').insert([dealPayload]);
             if (retry.error) return alert("❌ خطأ أثناء حفظ الديل: " + retry.error.message);
-            savedDealId = retry.data.id;
-        } else {
-            savedDealId = insertedDeal.id;
         }
-    }
-
-    if (diffPaid > 0) {
-        await db.from('treasury_transactions').insert([{
-            transaction_type: 'out',
-            amount: diffPaid,
-            description: `شراء وتخليص ديل (${watchBrand || 'ساعة'} - العميل: ${dealPayload.client_name}) - بواسطة: ${currentUser.full_name}`,
-            related_deal_id: savedDealId
-        }]);
     }
 
     showToast("✅ تم حفظ وتحديث بيانات الديل بنجاح!", "success");
@@ -422,7 +410,7 @@ function renderDeals(query = '') {
 
         const imageHtml = d.item_image_url
             ? `<div onclick="viewDealImage('${d.id}')" class="relative group cursor-pointer inline-block">
-                 <img src="${d.item_image_url}" class="h-14 w-14 rounded-lg object-cover border-2 border-slate-300 group-hover:border-blue-500 transition">
+                 <img src="${esc(d.item_image_url)}" class="h-14 w-14 rounded-lg object-cover border-2 border-slate-300 group-hover:border-blue-500 transition">
                  <span class="block text-[10px] text-blue-600 font-bold text-center mt-0.5">🔍 تكبير</span>
                </div>`
             : '<span class="text-xs text-slate-400">لا توجد</span>';
@@ -430,28 +418,28 @@ function renderDeals(query = '') {
         return `
         <tr class="${rowBgClass} transition">
             <td class="p-3.5">
-                <div class="font-bold text-slate-900">${d.client_name}</div>
-                <a href="https://wa.me/2${d.client_phone}" target="_blank" class="text-xs text-emerald-600 font-bold hover:underline">📱 ${d.client_phone}</a>
+                <div class="font-bold text-slate-900">${esc(d.client_name)}</div>
+                <a href="https://wa.me/2${esc(d.client_phone)}" target="_blank" class="text-xs text-emerald-600 font-bold hover:underline">📱 ${esc(d.client_phone)}</a>
             </td>
             <td class="p-3.5">
-                <div class="font-extrabold text-blue-800">${d.watch_brand ? '⌚ ' + d.watch_brand : '-'}</div>
-                <div class="text-xs text-slate-500 mt-0.5">📍 ${d.client_location || 'غير محدد'}</div>
+                <div class="font-extrabold text-blue-800">${esc(d.watch_brand) ? '⌚ ' + esc(d.watch_brand) : '-'}</div>
+                <div class="text-xs text-slate-500 mt-0.5">📍 ${esc(d.client_location) || 'غير محدد'}</div>
             </td>
-            <td class="p-3.5 max-w-xs font-medium">${d.deal_details}</td>
+            <td class="p-3.5 max-w-xs font-medium">${esc(d.deal_details)}</td>
             <td class="p-3.5 space-y-0.5">
                 <div class="text-xs text-rose-600 font-bold">العميل طالب: ${Number(d.amount_requested || 0).toLocaleString()} ج.م</div>
-                <div class="text-xs text-indigo-700 font-bold">رينج البيع: ${d.selling_price_range || 'غير محدد'}</div>
+                <div class="text-xs text-indigo-700 font-bold">رينج البيع: ${esc(d.selling_price_range) || 'غير محدد'}</div>
                 <div class="text-xs text-emerald-700 font-bold">دفعتله: ${Number(d.amount_paid || 0).toLocaleString()} ج.م</div>
             </td>
             <td class="p-3.5 text-xs">
                 <div class="font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</div>
-                <div class="text-[10px] text-slate-500 mt-0.5 font-bold">📲 خط الإرسال: ${waInst ? `${waInst.instance_name} (${waInst.phone_number})` : 'توزيع تلقائي'}</div>
-                ${d.reminder_message ? `<div class="mt-1 text-[10px] bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200 max-w-[180px] truncate" title="${d.reminder_message}">💬 ${d.reminder_message}</div>` : ''}
+                <div class="text-[10px] text-slate-500 mt-0.5 font-bold">📲 خط الإرسال: ${waInst ? `${esc(waInst.instance_name)} (${esc(waInst.phone_number)})` : 'توزيع تلقائي'}</div>
+                ${esc(d.reminder_message) ? `<div class="mt-1 text-[10px] bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200 max-w-[180px] truncate" title="${esc(d.reminder_message)}">💬 ${esc(d.reminder_message)}</div>` : ''}
             </td>
             <td class="p-3.5">${imageHtml}</td>
             <td class="p-3.5">
                 ${badge}
-                <div class="text-xs text-slate-500 mt-1">${emp ? '👤 ' + emp.full_name : '<span class="text-amber-600">بدون موظف</span>'}</div>
+                <div class="text-xs text-slate-500 mt-1">${emp ? '👤 ' + esc(emp.full_name) : '<span class="text-amber-600">بدون موظف</span>'}</div>
             </td>
             <td class="p-3.5">${actionButtons}</td>
         </tr>`;

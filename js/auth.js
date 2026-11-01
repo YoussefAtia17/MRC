@@ -20,6 +20,7 @@ async function restoreSession() {
     try {
         const { data: me, error } = await db.rpc('app_me');
         if (error || !me) return clearSession();
+        await db.rpc('app_lock_treasury');
         currentUser = me;
         launchApp();
     } catch (err) {
@@ -165,7 +166,7 @@ async function saveProfileSettings(e) {
     e.preventDefault();
     const full_name = document.getElementById('profName').value.trim();
     const rawEmail = document.getElementById('profEmail').value.trim();
-    const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
+    const email = rawEmail || currentUser.email || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
     const phone = document.getElementById('profPhone').value.trim();
     const newPassword = document.getElementById('profPassword').value.trim();
 
@@ -188,9 +189,9 @@ function renderUsers() {
     const visibleUsers = state.users.filter(u => !SYSTEM_LOCK_EMAILS.includes(u.email));
     document.getElementById('usersTableBody').innerHTML = visibleUsers.map(u => `
         <tr>
-            <td class="p-3 font-bold">${u.full_name}</td>
-            <td class="p-3">${u.email && !u.email.endsWith('@mrc.local') ? u.email : '<span class="text-xs text-slate-400">يدخل بالاسم فقط</span>'}</td>
-            <td class="p-3 font-semibold text-emerald-700">${u.phone || '-'}</td>
+            <td class="p-3 font-bold">${esc(u.full_name)}</td>
+            <td class="p-3">${esc(u.email) && !esc(u.email).endsWith('@mrc.local') ? esc(u.email) : '<span class="text-xs text-slate-400">يدخل بالاسم فقط</span>'}</td>
+            <td class="p-3 font-semibold text-emerald-700">${esc(u.phone) || '-'}</td>
             <td class="p-3 font-bold">${u.role === 'owner' ? '<span class="bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full text-xs">👑 أونر</span>' : '<span class="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs">💼 موظف</span>'}</td>
             <td class="p-3 text-xs">${new Date(u.created_at).toLocaleString('ar-EG')}</td>
             <td class="p-3">${u.role !== 'owner' ? `<button onclick="deleteEmployeeAndUser('', '${u.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold">حذف الحساب</button>` : '-'}</td>

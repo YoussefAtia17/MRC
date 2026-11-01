@@ -46,7 +46,7 @@ async function ownerCreateEmployee(e) {
 
     if (error) return alert("❌ خطأ في إنشاء الحساب: " + error.message);
 
-    showToast(`✅ تم إنشاء حساب (${full_name}) بصلاحية (${role === 'owner' ? '👑 أونر' : '💼 موظف'}) بنجاح!`, 'success');
+    showToast(`✅ تم إنشاء حساب (${esc(full_name)}) بصلاحية (${role === 'owner' ? '👑 أونر' : '💼 موظف'}) بنجاح!`, 'success');
     e.target.reset();
     closeModal('addEmployeeModal');
     await loadAllData();
@@ -104,11 +104,12 @@ async function saveEmpFinancial(e) {
     const currentBalance = getCurrentTreasuryBalance();
     const typeLabel = transaction_type === 'loan' ? 'السلفة' : 'البونص';
 
-    if (currentBalance < amount) {
+    // الرصيد بيتشيّك على السيرفر دايماً، وهنا بس لو الخزنة مفتوحة عشان رسالة أوضح
+    if (isTreasuryUnlocked && currentBalance < amount) {
         return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي لصرف ${typeLabel}!\n\nالمبلغ المطلوب: ${amount.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
     }
 
-    const { data: finData, error } = await db
+    const { error } = await db
         .from('employee_financials')
         .insert([{
             employee_id,
@@ -116,22 +117,10 @@ async function saveEmpFinancial(e) {
             amount,
             notes,
             approval_status: 'approved'
-        }])
-        .select()
-        .single();
+        }]);
 
     if (error) return alert("❌ خطأ أثناء التسجيل: " + error.message);
 
-    const emp = state.employees.find(x => x.id === employee_id);
-    const actionTitle = transaction_type === 'loan' ? 'سحب سلفة' : 'صرف بونص (مكافأة)';
-    const noteText = notes ? ` - البيان: ${notes}` : '';
-
-    await db.from('treasury_transactions').insert([{
-        transaction_type: 'out',
-        amount: amount,
-        description: `${actionTitle}: ${emp ? emp.full_name : ''}${noteText}`,
-        related_emp_financial_id: finData.id
-    }]);
 
     selectedEmployeeHistoryId = employee_id;
     showToast(`تم تسجيل ${typeLabel} بمبلغ ${amount.toLocaleString()} ج.م وخصمها من الخزنة فوراً!`, "success");
@@ -141,7 +130,7 @@ async function saveEmpFinancial(e) {
 }
 
 function renderEmployees() {
-    const opts = state.employees.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
+    const opts = state.employees.map(e => `<option value="${e.id}">${esc(e.full_name)}</option>`).join('');
     document.getElementById('dealEmployee').innerHTML = `<option value="">-- اختر المسؤول --</option>` + opts;
     document.getElementById('finEmpId').innerHTML = opts;
 
@@ -182,12 +171,12 @@ function renderEmployees() {
                             👑 حساب أونر (Owner)
                         </span>
                         <h3 class="font-extrabold text-base text-amber-300 flex items-center gap-2">
-                            <span>${emp.full_name}</span>
+                            <span>${esc(emp.full_name)}</span>
                             <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-amber-200'}">
                                 ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
                             </span>
                         </h3>
-                        <p class="text-xs text-slate-300 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
+                        <p class="text-xs text-slate-300 mt-1">📱 واتساب: <b>${esc(emp.phone_whatsapp) || 'غير مسجل'}</b></p>
                     </div>
                     ${currentUser.role === 'owner' && emp.user_id !== currentUser.id ? `
                         <button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-600 hover:text-white px-2.5 py-1 rounded-lg font-bold">حذف</button>
@@ -210,12 +199,12 @@ function renderEmployees() {
                         💼 موظف (يتجدد يوم ${hireDay} شهرياً)
                     </span>
                     <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
-                        <span>${emp.full_name}</span>
+                        <span>${esc(emp.full_name)}</span>
                         <span class="text-[11px] px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">
                             ${isSelected ? '▼ السجل مفتوح' : '▶ عرض السجل (' + allRecs.length + ')'}
                         </span>
                     </h3>
-                    <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${emp.phone_whatsapp || 'غير مسجل'}</b></p>
+                    <p class="text-xs text-slate-500 mt-1">📱 واتساب: <b>${esc(emp.phone_whatsapp) || 'غير مسجل'}</b></p>
                 </div>
                 ${currentUser.role === 'owner' ? `<button onclick="event.stopPropagation(); deleteEmployeeAndUser('${emp.id}', '${emp.user_id || ''}')" class="text-xs text-rose-600 font-bold hover:underline">حذف</button>` : ''}
             </div>
@@ -250,7 +239,7 @@ function renderEmployees() {
                         <tr class="${isCurrentCycle ? '' : 'bg-slate-50 text-slate-400'}">
                             <td class="p-3">${f.transaction_type === 'loan' ? '<span class="text-rose-600 font-bold">🔻 سلفة مخصومة</span>' : '<span class="text-emerald-600 font-bold">🎁 بونص</span>'}</td>
                             <td class="p-3 font-bold">${Number(f.amount).toLocaleString()} ج.م</td>
-                            <td class="p-3">${f.notes || '-'}</td>
+                            <td class="p-3">${esc(f.notes) || '-'}</td>
                             <td class="p-3 text-xs">${fDate.toLocaleString('ar-EG')}</td>
                             <td class="p-3">
                                 ${isCurrentCycle
