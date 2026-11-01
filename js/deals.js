@@ -114,13 +114,44 @@ function getSelectedWatchBrand() {
     return sel || searchInputVal;
 }
 
-function fillDefaultReminderText() {
+// طول ما الرسالة متولدة تلقائياً بتتحدث لوحدها مع تغيير الميعاد/اسم العميل/الساعة،
+// ولو اتعدلت بالإيد بتفضل زي ما هي لحد ما يدوس (توليد نص تلقائي)
+let reminderIsAuto = true;
+
+function formatMeetingParts(mt) {
+    if (!mt) return null;
+    const d = new Date(mt);
+    if (isNaN(d)) return null;
+    return {
+        day: d.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        time: d.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })
+    };
+}
+
+function buildReminderMessage() {
     const client = document.getElementById('clientName').value.trim() || 'عميلنا العزيز';
-    const brand = getSelectedWatchBrand() || 'الساعة المعروضة';
-    const mt = document.getElementById('meetingTime').value;
-    const timeFormatted = mt ? new Date(mt).toLocaleString('ar-EG') : 'الموعد المتفق عليه';
-    const msg = `أهلاً بك أستاذ ${client} 👋\nنذكركم بموعدنا في (القصر الملكي - ASER WATCH) بخصوص (${brand}) في تمام: ${timeFormatted}.\nفي انتظاركم، وشكراً لتعاملكم معنا! ⌚`;
-    document.getElementById('reminderMessage').value = msg;
+    const brand = getSelectedWatchBrand();
+    const when = formatMeetingParts(document.getElementById('meetingTime').value);
+    const lines = [
+        `أهلاً بحضرتك أستاذ ${client} 👋`,
+        '',
+        'بنأكد مع حضرتك ميعادنا في *القصر الملكي - ASER WATCH* ⌚',
+        '',
+        `🗓️ *اليوم:* ${when ? when.day : 'هيتحدد قريب'}`,
+        `⏰ *الساعة:* ${when ? when.time : 'هتتحدد قريب'}`
+    ];
+    if (brand) lines.push(`⌚ *بخصوص:* ${brand}`);
+    lines.push('', 'لو حابب تغيّر الميعاد ابعتلنا هنا في أي وقت 🙏', 'في انتظار حضرتك، وشكراً لثقتك فينا ✨');
+    return lines.join('\n');
+}
+
+function fillDefaultReminderText() {
+    reminderIsAuto = true;
+    updateWhatsAppPreview();
+}
+
+function onReminderTyped() {
+    reminderIsAuto = false;
     updateWhatsAppPreview();
 }
 
@@ -130,16 +161,16 @@ function updateWhatsAppPreview() {
         document.getElementById('selectedWatchBrandLabel').textContent = `⌚ ${customVal} (يدوي)`;
     }
 
-    const customMsg = document.getElementById('reminderMessage').value.trim();
-    if (customMsg) {
-        document.getElementById('waPreviewText').textContent = customMsg;
-    } else {
-        const client = document.getElementById('clientName').value.trim() || 'العميل';
-        const brand = getSelectedWatchBrand() || 'الساعة';
-        const mt = document.getElementById('meetingTime').value;
-        const timeFormatted = mt ? new Date(mt).toLocaleString('ar-EG') : '(لم يحدد الوقت بعد)';
-        document.getElementById('waPreviewText').textContent = `أهلاً بك أستاذ ${client} 👋\nتذكير بموعدنا بخصوص (${brand}) في الموعد: ${timeFormatted}`;
-    }
+    const reminderBox = document.getElementById('reminderMessage');
+    if (reminderIsAuto) reminderBox.value = buildReminderMessage();
+
+    // نفس تنسيق واتساب: *كلام* بيظهر Bold
+    const msg = reminderBox.value.trim() || buildReminderMessage();
+    document.getElementById('waPreviewText').innerHTML = esc(msg).replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+    const hint = document.getElementById('reminderModeHint');
+    if (hint) hint.textContent = reminderIsAuto
+        ? '✨ الرسالة بتتحدث تلقائياً مع الميعاد واسم العميل'
+        : '✍️ رسالة متعدلة يدوياً — دوس (توليد نص تلقائي) عشان ترجع للشكل المنظم بالميعاد';
 }
 
 function onAmountPaidChange(val) {
@@ -197,6 +228,7 @@ function openNewDealModal() {
     const myEmp = state.employees.find(e => e.user_id === currentUser.id);
     if (myEmp) document.getElementById('dealEmployee').value = myEmp.id;
 
+    reminderIsAuto = true;
     updateWhatsAppPreview();
     openModal('dealModal');
 }
@@ -236,6 +268,7 @@ function openEditDeal(dealId) {
     document.getElementById('dealStatus').value = d.status || 'in_progress';
     document.getElementById('amountPaid').disabled = (d.status === 'cancelled');
     document.getElementById('reminderMessage').value = d.reminder_message || '';
+    reminderIsAuto = !d.reminder_message;
 
     if (d.meeting_time) {
         const dt = new Date(d.meeting_time);
@@ -342,9 +375,36 @@ async function saveDeal(e) {
     renderDeals(currentSearch);
 }
 
+// آخر قائمة ديلز اتعرضت (بعد البحث والفلتر) — هي اللي بتتصدّر في الـ Excel
+let lastRenderedDeals = [];
+
+function getDealEmployeeName(d) {
+    const emp = state.employees.find(e => e.id === d.employee_id);
+    return emp ? emp.full_name : '';
+}
+
+function renderDealEmployeeFilter() {
+    const select = document.getElementById('dealEmployeeFilter');
+    if (!select) return '';
+    const current = select.value;
+    const countFor = id => state.deals.filter(d => d.employee_id === id).length;
+    const active = state.employees.filter(e => !e.archived_at);
+    const archived = state.employees.filter(e => e.archived_at && countFor(e.id) > 0);
+    select.innerHTML = `<option value="">👥 كل الموظفين (${state.deals.length})</option>`
+        + active.map(e => `<option value="${e.id}">👤 ${esc(e.full_name)} (${countFor(e.id)})</option>`).join('')
+        + archived.map(e => `<option value="${e.id}">🗂️ ${esc(e.full_name)} - محذوف (${countFor(e.id)})</option>`).join('')
+        + `<option value="none">⚠️ بدون موظف (${state.deals.filter(d => !d.employee_id).length})</option>`;
+    if ([...select.options].some(o => o.value === current)) select.value = current;
+    return select.value;
+}
+
 function renderDeals(query = '') {
     const tbody = document.getElementById('dealsTableBody');
     let list = state.deals;
+
+    const empFilter = renderDealEmployeeFilter();
+    if (empFilter === 'none') list = list.filter(d => !d.employee_id);
+    else if (empFilter) list = list.filter(d => d.employee_id === empFilter);
 
     if (query) {
         // تقسيم جملة البحث إلى كلمات وتوحيد الحروف العربية والإنجليزية للبحث في كل خانات الديل
@@ -356,11 +416,26 @@ function renderDeals(query = '') {
                 d.watch_brand,
                 d.deal_details,
                 d.client_location,
-                d.selling_price_range
+                d.selling_price_range,
+                getDealEmployeeName(d),
+                d.assigned_by_name
             ].join(' '));
 
             return qWords.every(word => searchableContent.includes(word));
         });
+    }
+
+    lastRenderedDeals = list;
+    const summary = document.getElementById('dealsSummary');
+    if (summary) {
+        const by = s => list.filter(d => d.status === s).length;
+        const paid = list.reduce((s, d) => s + Number(d.amount_paid || 0), 0);
+        const filtered = list.length !== state.deals.length;
+        summary.innerHTML = `📊 ${filtered ? 'نتيجة الفلتر' : 'كل الديلز'}: <span class="text-slate-900">${list.length} ديل</span>
+            · <span class="text-emerald-700">✅ ${by('completed')} تم</span>
+            · <span class="text-amber-700">⏳ ${by('in_progress')} قيد التواصل</span>
+            · <span class="text-rose-700">❌ ${by('cancelled')} ملغي</span>
+            · <span class="text-blue-700">💵 مدفوع ${paid.toLocaleString()} ج.م</span>`;
     }
 
     if (list.length === 0) {
