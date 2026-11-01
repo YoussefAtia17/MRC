@@ -3,11 +3,6 @@
 // =========================================================================
 
 // 1. حماية وإدارة أرقام واتساب الشركة
-function getSavedWhatsappPassword() {
-    const lockRecord = state.users.find(u => u.email === 'whatsapp@mrc.lock');
-    return lockRecord ? lockRecord.password_hash : '1234';
-}
-
 function requestWhatsappAccess() {
     if (isWhatsappUnlocked) {
         switchPage('whatsapp');
@@ -20,13 +15,11 @@ function requestWhatsappAccess() {
 
 async function verifyWhatsappPassword(e) {
     e.preventDefault();
-    await loadAllData();
     const entered = document.getElementById('waPassInput').value.trim();
-    const correctPass = getSavedWhatsappPassword();
-    const ownerAccount = state.users.find(u => u.role === 'owner');
-    const ownerLoginPass = ownerAccount ? ownerAccount.password_hash : null;
+    const { data: isValid, error } = await db.rpc('app_verify_lock', { p_kind: 'whatsapp', p_password: entered });
+    if (error) return alert("❌ خطأ: " + error.message);
 
-    if (entered === correctPass || (ownerLoginPass && entered === ownerLoginPass)) {
+    if (isValid) {
         isWhatsappUnlocked = true;
         closeModal('waPasswordModal');
         switchPage('whatsapp');
@@ -47,19 +40,8 @@ function lockWhatsappPage() {
 async function saveNewWhatsappPassword(e) {
     e.preventDefault();
     const newPass = document.getElementById('newWaPass').value.trim();
-    const existingLock = state.users.find(u => u.email === 'whatsapp@mrc.lock');
-
-    if (existingLock) {
-        await db.from('app_users').update({ password_hash: newPass }).eq('id', existingLock.id);
-    } else {
-        await db.from('app_users').insert([{
-            full_name: 'قفل أرقام الواتساب',
-            email: 'whatsapp@mrc.lock',
-            phone: '0000',
-            password_hash: newPass,
-            role: 'user'
-        }]);
-    }
+    const { error } = await db.rpc('app_set_lock_password', { p_kind: 'whatsapp', p_password: newPass });
+    if (error) return alert("❌ خطأ: " + error.message);
 
     closeModal('changeWaPassModal');
     showToast("🔑 تم تغيير باسورد أرقام الواتساب بنجاح!", "success");
@@ -228,11 +210,6 @@ function renderWhatsappInstances() {
 // =========================================================================
 // 2. إدارة وحماية الخزنة والتقفيل اليومي والشهري
 // =========================================================================
-function getSavedTreasuryPassword() {
-    const lockRecord = state.users.find(u => u.email === 'treasury@mrc.lock');
-    return lockRecord ? lockRecord.password_hash : '1234';
-}
-
 function requestTreasuryAccess() {
     if (isTreasuryUnlocked) {
         switchPage('treasury');
@@ -245,13 +222,11 @@ function requestTreasuryAccess() {
 
 async function verifyTreasuryPassword(e) {
     e.preventDefault();
-    await loadAllData();
     const entered = document.getElementById('treasuryPassInput').value.trim();
-    const correctPass = getSavedTreasuryPassword();
-    const ownerAccount = state.users.find(u => u.role === 'owner');
-    const ownerLoginPass = ownerAccount ? ownerAccount.password_hash : null;
+    const { data: isValid, error } = await db.rpc('app_verify_lock', { p_kind: 'treasury', p_password: entered });
+    if (error) return alert("❌ خطأ: " + error.message);
 
-    if (entered === correctPass || (ownerLoginPass && entered === ownerLoginPass)) {
+    if (isValid) {
         isTreasuryUnlocked = true;
         closeModal('treasuryPasswordModal');
         switchPage('treasury');
@@ -271,19 +246,8 @@ function lockTreasury() {
 async function saveNewTreasuryPassword(e) {
     e.preventDefault();
     const newPass = document.getElementById('newTreasuryPass').value.trim();
-    const existingLock = state.users.find(u => u.email === 'treasury@mrc.lock');
-
-    if (existingLock) {
-        await db.from('app_users').update({ password_hash: newPass }).eq('id', existingLock.id);
-    } else {
-        await db.from('app_users').insert([{
-            full_name: 'قفل الخزنة',
-            email: 'treasury@mrc.lock',
-            phone: '0000',
-            password_hash: newPass,
-            role: 'user'
-        }]);
-    }
+    const { error } = await db.rpc('app_set_lock_password', { p_kind: 'treasury', p_password: newPass });
+    if (error) return alert("❌ خطأ: " + error.message);
 
     closeModal('changeTreasuryPassModal');
     showToast("🔑 تم تغيير باسورد الخزنة بنجاح!", "success");

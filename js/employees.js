@@ -28,9 +28,9 @@ async function ownerCreateEmployee(e) {
     const role = document.getElementById('empRole').value;
     const full_name = document.getElementById('empName').value.trim();
     const phone_whatsapp = document.getElementById('empPhone').value.trim();
-    const password_hash = document.getElementById('empPassword').value.trim();
+    const password = document.getElementById('empPassword').value.trim();
 
-    if (!full_name || !phone_whatsapp || !password_hash) {
+    if (!full_name || !phone_whatsapp || !password) {
         return alert("⚠️ الاسم، رقم التليفون (الواتساب)، والباسورد خانات إجبارية!");
     }
 
@@ -38,19 +38,13 @@ async function ownerCreateEmployee(e) {
     const email = rawEmail || `${full_name.replace(/\s+/g, '_')}_${Date.now()}@mrc.local`;
     const base_salary = role === 'owner' ? 0 : Number(document.getElementById('empSalary').value || 0);
 
-    const { data: userAcc, error: userErr } = await db
-        .from('app_users')
-        .insert([{ full_name, email, phone: phone_whatsapp, password_hash, role }])
-        .select()
-        .single();
+    // الحساب وكارت الموظف بيتعملوا مع بعض على السيرفر، والباسورد بيتشفر هناك
+    const { error } = await db.rpc('app_create_user', {
+        p_full_name: full_name, p_email: email, p_phone: phone_whatsapp,
+        p_password: password, p_role: role, p_base_salary: base_salary
+    });
 
-    if (userErr) return alert("❌ خطأ في إنشاء الحساب: " + userErr.message);
-
-    const { error: empErr } = await db
-        .from('employees')
-        .insert([{ user_id: userAcc.id, full_name, phone_whatsapp, base_salary }]);
-
-    if (empErr) return alert("❌ خطأ في حفظ كارت البيانات: " + empErr.message);
+    if (error) return alert("❌ خطأ في إنشاء الحساب: " + error.message);
 
     showToast(`✅ تم إنشاء حساب (${full_name}) بصلاحية (${role === 'owner' ? '👑 أونر' : '💼 موظف'}) بنجاح!`, 'success');
     e.target.reset();
@@ -61,10 +55,12 @@ async function ownerCreateEmployee(e) {
 async function deleteEmployeeAndUser(empId, userId) {
     if (!confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) return;
     if (userId) {
-        const { error } = await db.from('app_users').delete().eq('id', userId);
+        // بيمسح الحساب وكارت الموظف المربوط بيه
+        const { error } = await db.rpc('app_delete_user', { p_user_id: userId });
         if (error) return alert("❌ لا يمكن حذف هذا الحساب: " + error.message);
+    } else {
+        await db.from('employees').delete().eq('id', empId);
     }
-    await db.from('employees').delete().eq('id', empId);
     if (selectedEmployeeHistoryId === empId) selectedEmployeeHistoryId = null;
     await loadAllData();
 }
