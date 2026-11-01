@@ -1,8 +1,8 @@
 // =========================================================================
 // إعدادات الاتصال بقاعدة البيانات (Supabase Configuration)
 // =========================================================================
-const SUPABASE_URL = "https://oxfyuvzaclrvxvdljrtb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_sw_Cv73ea6fcd_Pxfa2rww_f9W2Dm-I";
+const SUPABASE_URL = "https://ofleigxmkwwddyiqcuzp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_6aj1y1aXteYExxAam4Yo1g_bM16edkp";
 
 const isConfigured = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
 const db = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
