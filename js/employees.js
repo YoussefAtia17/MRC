@@ -6,6 +6,24 @@ function toggleSalaryFieldByRole(role) {
     document.getElementById('empSalaryWrapper').classList.toggle('hidden', role === 'owner');
 }
 
+// فتح نافذة إضافة حساب بخانات فاضية دايماً (من غير بيانات حد سجل قبل كده أو حفظها المتصفح)
+function clearAddEmployeeForm() {
+    document.getElementById('addEmployeeForm').reset();
+    ['empName', 'empPhone', 'empPassword', 'empEmail'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('empSalary').value = 0;
+    toggleSalaryFieldByRole(document.getElementById('empRole').value);
+}
+
+function openAddEmployeeModal() {
+    clearAddEmployeeForm();
+    openModal('addEmployeeModal');
+    // المتصفح أحياناً بيملا الخانات بعد ما النافذة تفتح، فبنفضّيها تاني
+    [50, 300].forEach(ms => setTimeout(() => {
+        if (document.activeElement?.closest('#addEmployeeForm')) return;
+        clearAddEmployeeForm();
+    }, ms));
+}
+
 // حساب بداية دورة الشهر الحالية للموظف بناءً على يوم إضافته (created_at)
 function getEmployeeCycleStartDate(empCreatedAt) {
     const now = new Date();

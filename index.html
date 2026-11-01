@@ -224,7 +224,7 @@
                         <button onclick="openEmpFinancialModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
                             💸 سحب سلفة فورية / إضافة بونص
                         </button>
-                        <button onclick="openModal('addEmployeeModal')" class="owner-only bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
+                        <button onclick="openAddEmployeeModal()" class="owner-only bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">
                             + إنشاء حساب جديد (موظف / أونر)
                         </button>
                     </div>
@@ -390,7 +390,7 @@
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
                         <span class="font-bold text-sm">🔐 حسابات الدخول المسجلة في النظام (أونر / موظفين)</span>
-                        <button onclick="openModal('addEmployeeModal')" class="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ إضافة حساب جديد</button>
+                        <button onclick="openAddEmployeeModal()" class="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ إضافة حساب جديد</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right text-sm">
@@ -674,7 +674,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب جديد في النظام (للأونر فقط)</h3>
             <p class="text-xs text-slate-500">يظهر للأونر كارت ذهبي مميز، وللموظف كارت رواتب وسلف، ويمكن الدخول بالاسم أو الإيميل.</p>
-            <form onsubmit="ownerCreateEmployee(event)" class="space-y-3 text-sm">
+            <form id="addEmployeeForm" onsubmit="ownerCreateEmployee(event)" autocomplete="off" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1 text-blue-800">نوع الحساب / الصلاحية (Role) *</label>
                     <select id="empRole" onchange="toggleSalaryFieldByRole(this.value)" class="w-full border-2 border-blue-400 rounded-lg p-2 bg-white font-bold">
@@ -684,23 +684,23 @@
                 </div>
                 <div>
                     <label class="block font-bold mb-1">الاسم / اسم المستخدم للدخول (Username) * [إجباري]</label>
-                    <input type="text" id="empName" required placeholder="مثال: ahmed (يُستخدم لتسجيل الدخول)" class="w-full border rounded-lg p-2">
+                    <input type="text" id="empName" name="mrc-new-emp-name" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" required placeholder="مثال: ahmed (يُستخدم لتسجيل الدخول)" class="w-full border rounded-lg p-2">
                 </div>
                 <div>
                     <label class="block font-bold mb-1 text-emerald-700">رقم التليفون / الواتساب * [إجباري]</label>
-                    <input type="text" id="empPhone" required placeholder="010xxxxxxxx (لتنبيهات الـ 24 ساعة وبيانات الموظف)" class="w-full border-2 border-emerald-400 rounded-lg p-2 font-bold">
+                    <input type="tel" id="empPhone" name="mrc-new-emp-phone" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" required placeholder="010xxxxxxxx (لتنبيهات الـ 24 ساعة وبيانات الموظف)" class="w-full border-2 border-emerald-400 rounded-lg p-2 font-bold">
                 </div>
                 <div>
                     <label class="block font-bold mb-1 text-rose-700">باسورد الحساب (Password) * [إجباري]</label>
-                    <input type="text" id="empPassword" required placeholder="اكتب الباسورد هنا..." class="w-full border-2 border-rose-400 rounded-lg p-2 font-bold">
+                    <input type="text" id="empPassword" name="mrc-new-emp-pass" autocomplete="new-password" data-lpignore="true" data-1p-ignore data-form-type="other" required placeholder="اكتب الباسورد هنا..." class="w-full border-2 border-rose-400 rounded-lg p-2 font-bold">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">البريد الإلكتروني (اختياري)</label>
-                    <input type="email" id="empEmail" placeholder="اختياري..." class="w-full border rounded-lg p-2">
+                    <input type="email" id="empEmail" name="mrc-new-emp-email" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="اختياري..." class="w-full border rounded-lg p-2">
                 </div>
                 <div id="empSalaryWrapper">
                     <label class="block font-semibold mb-1">المرتب الأساسي الشهري (ج.م)</label>
-                    <input type="number" id="empSalary" value="0" class="w-full border rounded-lg p-2">
+                    <input type="number" id="empSalary" value="0" autocomplete="off" class="w-full border rounded-lg p-2">
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeModal('addEmployeeModal')" class="px-4 py-2 rounded-lg bg-slate-200">إلغاء</button>
