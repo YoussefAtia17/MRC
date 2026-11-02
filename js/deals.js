@@ -228,8 +228,8 @@ function openNewDealModal() {
     }
     selectWatchBrandOption('');
     document.getElementById('dealModalTitle').textContent = "تسجيل ديل / ساعة جديدة";
-    document.getElementById('imagePreview').classList.add('hidden');
-    compressedImageDataUrl = "";
+    dealImages = [];
+    renderDealImagesPreview();
 
     const myEmp = state.employees.find(e => e.user_id === currentUser.id);
     if (myEmp) document.getElementById('dealEmployee').value = myEmp.id;
@@ -285,15 +285,8 @@ function openEditDeal(dealId) {
         document.getElementById('meetingTime').value = '';
     }
 
-    if (d.item_image_url) {
-        compressedImageDataUrl = d.item_image_url;
-        const preview = document.getElementById('imagePreview');
-        preview.src = d.item_image_url;
-        preview.classList.remove('hidden');
-    } else {
-        compressedImageDataUrl = "";
-        document.getElementById('imagePreview').classList.add('hidden');
-    }
+    dealImages = [...getDealImages(d)];
+    renderDealImagesPreview();
 
     updateWhatsAppPreview();
     openModal('dealModal');
@@ -302,7 +295,6 @@ function openEditDeal(dealId) {
 async function saveDeal(e) {
     e.preventDefault();
     const editId = document.getElementById('editDealId').value;
-    const oldPaid = Number(document.getElementById('oldAmountPaid').value || 0);
     let newPaid = Number(document.getElementById('amountPaid').value || 0);
     let status = document.getElementById('dealStatus').value;
 
@@ -312,16 +304,6 @@ async function saveDeal(e) {
     }
     if (status === 'cancelled') {
         newPaid = 0;
-    }
-
-    const diffPaid = newPaid - oldPaid;
-
-    // الرصيد بيتشيّك على السيرفر دايماً، وهنا بس لو الخزنة مفتوحة عشان رسالة أوضح
-    if (diffPaid > 0 && isTreasuryUnlocked) {
-        const currentBalance = getCurrentTreasuryBalance();
-        if (currentBalance < diffPaid) {
-            return alert(`⚠️ الخزنة فاضية أو الرصيد غير كافي!\n\nالمبلغ المدفوع في الديل: ${diffPaid.toLocaleString()} ج.م\nالرصيد المتاح في الخزنة حالياً: ${currentBalance.toLocaleString()} ج.م\n\nخش ضيف فلوس في الخزنة الأول.`);
-        }
     }
 
     const myEmp = state.employees.find(emp => emp.user_id === currentUser.id);
@@ -344,11 +326,11 @@ async function saveDeal(e) {
         selling_price_range: document.getElementById('sellingPriceRange').value.trim() || null,
         meeting_time: document.getElementById('meetingTime').value || null,
         reminder_message: document.getElementById('reminderMessage').value.trim() || null,
-        item_image_url: compressedImageDataUrl || null,
+        item_image_url: dealImages[0] || null,
+        item_images: dealImages,
         status: status
     };
 
-    // حركة الخزنة (صرف أو استرجاع الفرق) بتتسجل تلقائياً على السيرفر مع تشييك الرصيد
     if (editId) {
         const { error } = await db.from('deals').update(dealPayload).eq('id', editId);
         if (error) {
@@ -368,9 +350,9 @@ async function saveDeal(e) {
     }
 
     showToast("✅ تم حفظ وتحديث بيانات الديل بنجاح!", "success");
-    compressedImageDataUrl = "";
+    dealImages = [];
     document.getElementById('dealForm').reset();
-    document.getElementById('imagePreview').classList.add('hidden');
+    renderDealImagesPreview();
     closeModal('dealModal');
     await loadAllData();
     // إعادة تطبيق فلتر البحث الحالي بعد الحفظ مباشرة
@@ -486,9 +468,11 @@ function renderDeals(query = '') {
                 </div>`;
         }
 
-        const imageHtml = d.item_image_url
+        const images = getDealImages(d);
+        const imageHtml = images.length
             ? `<div onclick="viewDealImage('${d.id}')" class="relative group cursor-pointer inline-block">
-                 <img src="${esc(d.item_image_url)}" class="h-14 w-14 rounded-lg object-cover border-2 border-slate-300 group-hover:border-blue-500 transition">
+                 <img src="${esc(images[0])}" class="h-14 w-14 rounded-lg object-cover border-2 border-slate-300 group-hover:border-blue-500 transition">
+                 ${images.length > 1 ? `<span class="absolute top-0 left-0 bg-slate-900/80 text-white text-[10px] font-bold px-1.5 rounded-br-lg rounded-tl-lg">${images.length}📷</span>` : ''}
                  <span class="block text-[10px] text-blue-600 font-bold text-center mt-0.5">🔍 تكبير</span>
                </div>`
             : '<span class="text-xs text-slate-400">لا توجد</span>';

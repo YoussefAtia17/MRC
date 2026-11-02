@@ -34,12 +34,33 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('flex');
 }
 
-function viewDealImage(dealId) {
+function getDealImages(d) {
+    if (Array.isArray(d.item_images) && d.item_images.length) return d.item_images;
+    return d.item_image_url ? [d.item_image_url] : [];
+}
+
+let lightboxImages = [];
+let lightboxIndex = 0;
+let lightboxTitle = '';
+
+function viewDealImage(dealId, index = 0) {
     const d = state.deals.find(x => x.id === dealId);
-    if (!d || !d.item_image_url) return;
-    document.getElementById('lightboxImg').src = d.item_image_url;
-    document.getElementById('lightboxCaption').textContent = `صورة ديل العميل: ${d.client_name} (${d.watch_brand || d.deal_details})`;
+    if (!d) return;
+    lightboxImages = getDealImages(d);
+    if (!lightboxImages.length) return;
+    const about = d.watch_brand || d.deal_details;
+    lightboxTitle = `صور ديل العميل: ${d.client_name || '-'}${about ? ` (${about})` : ''}`;
+    showLightboxImage(index);
     openModal('imageViewerModal');
+}
+
+function showLightboxImage(index) {
+    const total = lightboxImages.length;
+    lightboxIndex = (index + total) % total;
+    document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+    document.getElementById('lightboxCaption').textContent = total > 1 ? `${lightboxTitle} — ${lightboxIndex + 1} / ${total}` : lightboxTitle;
+    document.getElementById('lightboxPrev').classList.toggle('hidden', total < 2);
+    document.getElementById('lightboxNext').classList.toggle('hidden', total < 2);
 }
 
 function isSameLocalDay(dateString) {
@@ -68,27 +89,52 @@ function getCurrentTreasuryBalance() {
     return totalIn - totalOut;
 }
 
-function compressAndPreviewImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxW = 700;
-            const scale = maxW / img.width;
-            canvas.width = img.width > maxW ? maxW : img.width;
-            canvas.height = img.width > maxW ? img.height * scale : img.height;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            compressedImageDataUrl = canvas.toDataURL('image/jpeg', 0.65);
-            const preview = document.getElementById('imagePreview');
-            preview.src = compressedImageDataUrl;
-            preview.classList.remove('hidden');
+function compressImageFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxW = 700;
+                const scale = maxW / img.width;
+                canvas.width = img.width > maxW ? maxW : img.width;
+                canvas.height = img.width > maxW ? img.height * scale : img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.65));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
         };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// بتضيف الصور المختارة على اللي موجودة (تقدر تختار كذا صورة مرة واحدة أو على مرات)
+async function compressAndPreviewImage(event) {
+    const files = [...event.target.files].filter(f => f.type.startsWith('image/'));
+    event.target.value = '';
+    for (const file of files) {
+        try { dealImages.push(await compressImageFile(file)); } catch { alert(`⚠️ الصورة (${file.name}) مش مقروءة`); }
+    }
+    renderDealImagesPreview();
+}
+
+function removeDealImage(index) {
+    dealImages.splice(index, 1);
+    renderDealImagesPreview();
+}
+
+function renderDealImagesPreview() {
+    const box = document.getElementById('imagePreview');
+    box.innerHTML = dealImages.map((src, i) => `
+        <div class="relative">
+            <img src="${esc(src)}" class="h-24 w-24 rounded-lg border object-cover">
+            <button type="button" onclick="removeDealImage(${i})" title="شيل الصورة" class="absolute -top-2 -left-2 bg-rose-600 hover:bg-rose-700 text-white w-6 h-6 rounded-full text-xs font-bold shadow">✕</button>
+        </div>`).join('');
+    box.classList.toggle('hidden', dealImages.length === 0);
+    document.getElementById('imageCountLabel').textContent = dealImages.length ? `(${dealImages.length} صورة)` : '';
 }
 
 async function deleteRow(table, id) {

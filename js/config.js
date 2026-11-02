@@ -25,7 +25,7 @@ const APP_USER_COLUMNS = 'id, full_name, email, phone, role, created_at, archive
 // المتغيرات العامة وحالة التطبيق (Global State)
 // =========================================================================
 let currentUser = null;
-let compressedImageDataUrl = "";
+let dealImages = []; // صور الديل المفتوح حالياً (data URLs مضغوطة)
 let isTreasuryUnlocked = false;
 let isWhatsappUnlocked = false;
 let selectedEmployeeHistoryId = null;

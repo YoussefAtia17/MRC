@@ -546,7 +546,11 @@
                 <span id="lightboxCaption" class="font-bold text-sm">صورة الساعة / الديل</span>
                 <button onclick="closeModal('imageViewerModal')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق ✕</button>
             </div>
-            <img id="lightboxImg" src="" alt="صورة الديل" class="max-h-[75vh] w-auto mx-auto rounded-xl object-contain">
+            <div class="relative">
+                <img id="lightboxImg" src="" alt="صورة الديل" class="max-h-[75vh] w-auto mx-auto rounded-xl object-contain">
+                <button id="lightboxPrev" onclick="showLightboxImage(lightboxIndex - 1)" class="hidden absolute top-1/2 -translate-y-1/2 right-2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full text-xl font-bold">›</button>
+                <button id="lightboxNext" onclick="showLightboxImage(lightboxIndex + 1)" class="hidden absolute top-1/2 -translate-y-1/2 left-2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full text-xl font-bold">‹</button>
+            </div>
         </div>
     </div>
 
@@ -615,7 +619,7 @@
                     <div>
                         <label class="block font-bold mb-1 text-emerald-700">💵 أنا دفعتله كام (ج.م)</label>
                         <input type="number" id="amountPaid" value="0" min="0" oninput="onAmountPaidChange(this.value)" class="w-full border border-emerald-400 rounded-lg p-2 font-bold bg-white">
-                        <span class="text-[10px] text-emerald-700 font-semibold">يقفل الديل Done تلقائياً ويخصم من الخزنة</span>
+                        <span class="text-[10px] text-slate-500 font-semibold">للتسجيل في الديل بس، مش بيتخصم من الخزنة</span>
                     </div>
                 </div>
 
@@ -656,9 +660,9 @@
                 </div>
 
                 <div>
-                    <label class="block font-semibold mb-1">صورة الساعة / الحاجة اللي عليها الديل</label>
-                    <input type="file" accept="image/*" onchange="compressAndPreviewImage(event)" class="w-full text-xs">
-                    <img id="imagePreview" class="hidden mt-2 h-24 rounded-lg border object-cover">
+                    <label class="block font-semibold mb-1">صور الساعة / الحاجة اللي عليها الديل (تقدر تختار كذا صورة) <span id="imageCountLabel" class="text-blue-700"></span></label>
+                    <input type="file" accept="image/*" multiple onchange="compressAndPreviewImage(event)" class="w-full text-xs">
+                    <div id="imagePreview" class="hidden mt-3 flex flex-wrap gap-3"></div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t">
