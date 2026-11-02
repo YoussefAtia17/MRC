@@ -560,12 +560,12 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-semibold mb-1">اسم العميل *</label>
-                        <input type="text" id="clientName" required oninput="updateWhatsAppPreview()" class="w-full border rounded-lg p-2">
+                        <label class="block font-semibold mb-1">اسم العميل</label>
+                        <input type="text" id="clientName" oninput="updateWhatsAppPreview()" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
-                        <label class="block font-semibold mb-1">رقم التليفون (واتساب) *</label>
-                        <input type="text" id="clientPhone" required placeholder="010xxxxxxxx" class="w-full border rounded-lg p-2">
+                        <label class="block font-semibold mb-1">رقم التليفون (واتساب)</label>
+                        <input type="text" id="clientPhone" placeholder="010xxxxxxxx" class="w-full border rounded-lg p-2">
                     </div>
                     <div>
                         <label class="block font-semibold mb-1">العميل منين (المكان)</label>
@@ -594,13 +594,13 @@
 
                     <div>
                         <label class="block font-semibold mb-1">الموظف / المسؤول عن الديل</label>
-                        <select id="dealEmployee" class="w-full border rounded-lg p-2 bg-white"></select>
+                        <select id="dealEmployee" onchange="onDealEmployeeChange()" class="w-full border rounded-lg p-2 bg-white"></select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-semibold mb-1">تفاصيل الـ Deal اللي حصل ما بينا (الوصف - متاح في البحث) *</label>
-                    <textarea id="dealDetails" required rows="2" placeholder="مثال: عايز يبيع ساعة رولكس ديت جاست حالة زيرو بالبوكس والضمان..." class="w-full border rounded-lg p-2"></textarea>
+                    <label class="block font-semibold mb-1">تفاصيل الـ Deal اللي حصل ما بينا (الوصف - متاح في البحث)</label>
+                    <textarea id="dealDetails" rows="2" placeholder="مثال: عايز يبيع ساعة رولكس ديت جاست حالة زيرو بالبوكس والضمان..." class="w-full border rounded-lg p-2"></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border">

@@ -173,15 +173,8 @@ function updateWhatsAppPreview() {
         : '✍️ رسالة متعدلة يدوياً — دوس (توليد نص تلقائي) عشان ترجع للشكل المنظم بالميعاد';
 }
 
-function onAmountPaidChange(val) {
-    const paid = Number(val || 0);
-    const statusSelect = document.getElementById('dealStatus');
-    if (paid > 0) {
-        statusSelect.value = 'completed';
-    } else if (statusSelect.value === 'completed') {
-        statusSelect.value = 'in_progress';
-    }
-}
+// المبلغ المدفوع مستقل عن الحالة: ممكن تدفع جزء والديل لسه قيد التواصل
+function onAmountPaidChange(val) {}
 
 function onDealStatusChange(status) {
     const paidInput = document.getElementById('amountPaid');
@@ -189,7 +182,6 @@ function onDealStatusChange(status) {
         paidInput.value = 0;
         paidInput.disabled = true;
     } else if (status === 'in_progress') {
-        paidInput.value = 0;
         paidInput.disabled = false;
     } else if (status === 'completed') {
         paidInput.disabled = false;
@@ -207,6 +199,20 @@ async function reopenCancelledDeal(dealId) {
     showToast(`🔄 تم الرجوع لديل العميل (${esc(d.client_name)}) وفتحه من جديد!`, "info");
     await loadAllData();
     openEditDeal(dealId);
+}
+
+// آخر 10 أرقام عشان 010... و +2010... و 2010... يتطابقوا
+function normalizePhone(phone) {
+    return String(phone || '').replace(/\D/g, '').slice(-10);
+}
+
+// لما تختار الموظف المسؤول، خط واتساب الشركة المسجل برقمه بيتختار لوحده
+function onDealEmployeeChange() {
+    const emp = state.employees.find(e => e.id === document.getElementById('dealEmployee').value);
+    const empPhone = normalizePhone(emp?.phone_whatsapp);
+    if (!empPhone) return;
+    const line = state.waInstances.find(w => normalizePhone(w.phone_number) === empPhone);
+    if (line) document.getElementById('dealWhatsappInstance').value = line.id;
 }
 
 function openNewDealModal() {
@@ -227,6 +233,7 @@ function openNewDealModal() {
 
     const myEmp = state.employees.find(e => e.user_id === currentUser.id);
     if (myEmp) document.getElementById('dealEmployee').value = myEmp.id;
+    onDealEmployeeChange();
 
     reminderIsAuto = true;
     updateWhatsAppPreview();
@@ -299,10 +306,6 @@ async function saveDeal(e) {
     let newPaid = Number(document.getElementById('amountPaid').value || 0);
     let status = document.getElementById('dealStatus').value;
 
-    if (newPaid > 0 && status === 'in_progress') {
-        status = 'completed';
-        document.getElementById('dealStatus').value = 'completed';
-    }
     if (status === 'completed' && newPaid <= 0) {
         document.getElementById('amountPaid').focus();
         return alert("⚠️ طالما اخترت (تم الشراء وتخليص الديل)، لازم تكتب في خانة (أنا دفعتله كام) المبلغ اللي اشتريت بيه!");
