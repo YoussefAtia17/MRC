@@ -62,7 +62,10 @@ async function ownerCreateEmployee(e) {
         p_password: password, p_role: role, p_base_salary: base_salary
     });
 
-    if (error) return alert("❌ خطأ في إنشاء الحساب: " + error.message);
+    if (error) {
+        if (error.message.includes('name taken')) return alert(`⚠️ فيه حساب شغال بالاسم (${full_name}) بالفعل! اختار اسم تاني عشان الدخول بالاسم مايتلخبطش.`);
+        return alert("❌ خطأ في إنشاء الحساب: " + error.message);
+    }
 
     showToast(`✅ تم إنشاء حساب (${esc(full_name)}) بصلاحية (${role === 'owner' ? '👑 أونر' : '💼 موظف'}) بنجاح!`, 'success');
     e.target.reset();
@@ -84,7 +87,10 @@ async function deleteEmployeeAndUser(empId, userId) {
 
 async function restoreEmployee(empId) {
     const { error } = await db.rpc('app_restore_employee', { p_emp_id: empId });
-    if (error) return alert("❌ لا يمكن استرجاع الموظف: " + error.message);
+    if (error) {
+        if (error.message.includes('name taken')) return alert("⚠️ فيه حساب شغال دلوقتي بنفس اسم الموظف ده. غيّر اسم الحساب التاني الأول وبعدين رجّعه.");
+        return alert("❌ لا يمكن استرجاع الموظف: " + error.message);
+    }
     const emp = state.employees.find(e => e.id === empId);
     showToast(`♻️ تم استرجاع (${esc(emp ? emp.full_name : '')}) بكل معاملاته، ويقدر يسجل دخول تاني.`, "success");
     await loadAllData();

@@ -93,7 +93,7 @@
                 <p class="text-xs text-slate-500 mt-2">تسجيل دخول الإدارة والموظفين (بالاسم أو البريد الإلكتروني)</p>
             </div>
 
-            <form id="signinForm" onsubmit="event.preventDefault(); handleSignIn(event); return false;" class="space-y-4 text-sm">
+            <form id="signinForm" onsubmit="submitOnce(event, handleSignIn)" class="space-y-4 text-sm">
                 <div>
                     <label class="block font-bold mb-1">اسم المستخدم أو البريد الإلكتروني *</label>
                     <input type="text" id="loginIdentifier" required placeholder="اكتب اسمك أو الإيميل..." class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:ring-2 focus:ring-amber-500">
@@ -422,7 +422,7 @@
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">📱</div>
             <h3 class="font-bold text-lg text-slate-900">أرقام الواتساب محمية بباسورد</h3>
             <p class="text-xs text-slate-500">أدخل باسورد أرقام الواتساب للدخول وإدارة خطوط الشركة</p>
-            <form onsubmit="verifyWhatsappPassword(event)" class="space-y-3">
+            <form onsubmit="submitOnce(event, verifyWhatsappPassword)" class="space-y-3">
                 <input type="password" id="waPassInput" required placeholder="أدخل الباسورد..." class="w-full border-2 border-slate-300 rounded-xl p-3 text-center font-bold outline-none focus:border-emerald-600">
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeModal('waPasswordModal')" class="w-1/2 py-2.5 rounded-xl bg-slate-200 font-bold text-xs">إلغاء</button>
@@ -436,7 +436,7 @@
     <div id="changeWaPassModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">🔑 تغيير باسورد صفحة أرقام الواتساب</h3>
-            <form onsubmit="saveNewWhatsappPassword(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveNewWhatsappPassword)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1">الباسورد الجديد لأرقام الواتساب *</label>
                     <input type="text" id="newWaPass" required minlength="3" placeholder="اكتب الباسورد الجديد..." class="w-full border rounded-xl p-2.5 font-bold">
@@ -453,7 +453,7 @@
     <div id="addWhatsappModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">📱 إضافة رقم واتساب بيزنس للشركة</h3>
-            <form onsubmit="saveWhatsappInstance(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveWhatsappInstance)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1">اسم الخط / الـ Instance (لربطه بالـ VPS) *</label>
                     <input type="text" id="waInstanceName" required placeholder="مثال: wa1 أو خط مبيعات 1" class="w-full border rounded-xl p-2.5">
@@ -481,7 +481,7 @@
     <div id="profileModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">⚙️ إعدادات حسابي (Profile & Settings)</h3>
-            <form onsubmit="saveProfileSettings(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveProfileSettings)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1">الاسم / اسم المستخدم (Username) *</label>
                     <input type="text" id="profName" required class="w-full border rounded-xl p-2.5">
@@ -512,7 +512,7 @@
             <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl">🔒</div>
             <h3 class="font-bold text-lg text-slate-900">الخزنة محمية بكلمة مرور</h3>
             <p class="text-xs text-slate-500">أدخل باسورد الخزنة للدخول إلى الحسابات والتقفيل اليومي والشهري</p>
-            <form onsubmit="verifyTreasuryPassword(event)" class="space-y-3">
+            <form onsubmit="submitOnce(event, verifyTreasuryPassword)" class="space-y-3">
                 <input type="password" id="treasuryPassInput" required placeholder="أدخل باسورد الخزنة..." class="w-full border-2 border-slate-300 rounded-xl p-3 text-center font-bold outline-none focus:border-blue-600">
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeModal('treasuryPasswordModal')" class="w-1/2 py-2.5 rounded-xl bg-slate-200 font-bold text-xs">إلغاء</button>
@@ -526,7 +526,7 @@
     <div id="changeTreasuryPassModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">🔑 تغيير باسورد الخزنة</h3>
-            <form onsubmit="saveNewTreasuryPassword(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveNewTreasuryPassword)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1">باسورد الخزنة الجديد *</label>
                     <input type="text" id="newTreasuryPass" required minlength="3" placeholder="اكتب الباسورد الجديد..." class="w-full border rounded-xl p-2.5 font-bold">
@@ -558,7 +558,7 @@
     <div id="dealModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto">
             <h3 id="dealModalTitle" class="font-bold text-lg border-b pb-2">تسجيل بيانات عميل وديل جديد</h3>
-            <form id="dealForm" onsubmit="saveDeal(event)" class="space-y-3.5 text-sm">
+            <form id="dealForm" onsubmit="submitOnce(event, saveDeal)" class="space-y-3.5 text-sm">
                 <input type="hidden" id="editDealId">
                 <input type="hidden" id="oldAmountPaid" value="0">
 
@@ -678,7 +678,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">إنشاء حساب جديد في النظام (للأونر فقط)</h3>
             <p class="text-xs text-slate-500">يظهر للأونر كارت ذهبي مميز، وللموظف كارت رواتب وسلف، ويمكن الدخول بالاسم أو الإيميل.</p>
-            <form id="addEmployeeForm" onsubmit="ownerCreateEmployee(event)" autocomplete="off" class="space-y-3 text-sm">
+            <form id="addEmployeeForm" onsubmit="submitOnce(event, ownerCreateEmployee)" autocomplete="off" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-bold mb-1 text-blue-800">نوع الحساب / الصلاحية (Role) *</label>
                     <select id="empRole" onchange="toggleSalaryFieldByRole(this.value)" class="w-full border-2 border-blue-400 rounded-lg p-2 bg-white font-bold">
@@ -718,7 +718,7 @@
     <div id="empFinancialModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">تسجيل سلفة فورية أو بونص</h3>
-            <form onsubmit="saveEmpFinancial(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveEmpFinancial)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-semibold mb-1">اختر الاسم *</label>
                     <select id="finEmpId" required class="w-full border rounded-lg p-2 bg-white"></select>
@@ -750,7 +750,7 @@
     <div id="treasuryModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
             <h3 class="font-bold text-lg border-b pb-2">تسجيل حركة في الخزنة</h3>
-            <form onsubmit="saveTreasuryTransaction(event)" class="space-y-3 text-sm">
+            <form onsubmit="submitOnce(event, saveTreasuryTransaction)" class="space-y-3 text-sm">
                 <div>
                     <label class="block font-semibold mb-1">نوع الحركة *</label>
                     <select id="trType" class="w-full border rounded-lg p-2 bg-white">

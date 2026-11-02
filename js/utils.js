@@ -24,6 +24,23 @@ function showToast(message, type = 'info') {
     setTimeout(() => { if (toast.parentElement) toast.remove(); }, 6000);
 }
 
+// كل الفورمز بتعدي من هنا: الضغطة التانية (أو Enter مرتين) وهي لسه بتحفظ بتتجاهل،
+// عشان مايتسجلش نفس الحساب أو الحركة مرتين
+async function submitOnce(event, handler) {
+    event.preventDefault();
+    const form = event.target;
+    if (form.dataset.busy) return;
+    form.dataset.busy = '1';
+    const buttons = [...form.querySelectorAll('button[type="submit"], button:not([type])')];
+    buttons.forEach(b => { b.disabled = true; b.classList.add('opacity-60', 'cursor-wait'); });
+    try {
+        await handler(event);
+    } finally {
+        delete form.dataset.busy;
+        buttons.forEach(b => { b.disabled = false; b.classList.remove('opacity-60', 'cursor-wait'); });
+    }
+}
+
 function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
     document.getElementById(id).classList.add('flex');
