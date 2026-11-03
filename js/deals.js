@@ -145,6 +145,52 @@ function buildReminderMessage() {
     return lines.join('\n');
 }
 
+// ===== رسالة المتابعة: بتتبعت كل كام يوم للعميل طول ما الديل لسه قيد التواصل =====
+let followupIsAuto = true;
+
+function buildFollowupMessage() {
+    const client = document.getElementById('clientName').value.trim() || 'عميلنا العزيز';
+    const brand = getSelectedWatchBrand();
+    const lines = [
+        `أهلاً بحضرتك أستاذ ${client} 👋`,
+        '',
+        'معاك *القصر الملكي - ASER WATCH* ⌚',
+        brand ? `حبينا نطمن على حضرتك ونتابع معاك بخصوص *${brand}*` : 'حبينا نطمن على حضرتك ونتابع معاك بخصوص طلبك',
+        '',
+        'لو لسه مهتم أو عندك أي استفسار، إحنا تحت أمرك في أي وقت 🙏',
+        'وشكراً لثقتك فينا ✨'
+    ];
+    return lines.join('\n');
+}
+
+function getFollowupIntervalDays() {
+    const days = Math.round(Number(document.getElementById('followupIntervalDays').value));
+    return days >= 1 ? Math.min(days, 365) : 15;
+}
+
+function fillDefaultFollowupText() {
+    followupIsAuto = true;
+    updateFollowupPreview();
+}
+
+function onFollowupTyped() {
+    followupIsAuto = false;
+    updateFollowupPreview();
+}
+
+function updateFollowupPreview() {
+    const box = document.getElementById('followupMessage');
+    if (followupIsAuto) box.value = buildFollowupMessage();
+    const msg = box.value.trim() || buildFollowupMessage();
+    document.getElementById('followupPreviewText').innerHTML = esc(msg).replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+    const days = getFollowupIntervalDays();
+    const status = document.getElementById('dealStatus').value;
+    const hint = status === 'in_progress'
+        ? `🔁 هتتبعت كل ${days} يوم طول ما الديل قيد التواصل، وبتقف أول ما يتقفل.`
+        : '⏸️ الديل مقفول، فرسالة المتابعة مش هتتبعت.';
+    document.getElementById('followupModeHint').textContent = hint + (followupIsAuto ? ' ✨ النص بيتحدث تلقائياً مع اسم العميل ونوع الساعة.' : ' ✍️ نص متعدل يدوياً.');
+}
+
 function fillDefaultReminderText() {
     reminderIsAuto = true;
     updateWhatsAppPreview();
@@ -167,6 +213,7 @@ function updateWhatsAppPreview() {
     // نفس تنسيق واتساب: *كلام* بيظهر Bold
     const msg = reminderBox.value.trim() || buildReminderMessage();
     document.getElementById('waPreviewText').innerHTML = esc(msg).replace(/\*([^*\n]+)\*/g, '<b>$1</b>');
+    updateFollowupPreview();
     const hint = document.getElementById('reminderModeHint');
     if (hint) hint.textContent = reminderIsAuto
         ? '✨ الرسالة بتتحدث تلقائياً مع الميعاد واسم العميل'
@@ -178,6 +225,7 @@ function onAmountPaidChange(val) {}
 
 function onDealStatusChange(status) {
     const paidInput = document.getElementById('amountPaid');
+    updateFollowupPreview();
     if (status === 'cancelled') {
         paidInput.value = 0;
         paidInput.disabled = true;
@@ -236,6 +284,8 @@ function openNewDealModal() {
     onDealEmployeeChange();
 
     reminderIsAuto = true;
+    followupIsAuto = true;
+    document.getElementById('followupIntervalDays').value = 15;
     updateWhatsAppPreview();
     openModal('dealModal');
 }
@@ -276,6 +326,9 @@ function openEditDeal(dealId) {
     document.getElementById('amountPaid').disabled = (d.status === 'cancelled');
     document.getElementById('reminderMessage').value = d.reminder_message || '';
     reminderIsAuto = !d.reminder_message;
+    document.getElementById('followupMessage').value = d.followup_message || '';
+    document.getElementById('followupIntervalDays').value = d.followup_interval_days || 15;
+    followupIsAuto = !d.followup_message;
 
     if (d.meeting_time) {
         const dt = new Date(d.meeting_time);
@@ -326,28 +379,33 @@ async function saveDeal(e) {
         selling_price_range: document.getElementById('sellingPriceRange').value.trim() || null,
         meeting_time: document.getElementById('meetingTime').value || null,
         reminder_message: document.getElementById('reminderMessage').value.trim() || null,
+        followup_message: document.getElementById('followupMessage').value.trim() || null,
+        followup_interval_days: getFollowupIntervalDays(),
         item_image_url: dealImages[0] || null,
         item_images: dealImages,
         status: status
     };
 
-    if (editId) {
-        const { error } = await db.from('deals').update(dealPayload).eq('id', editId);
-        if (error) {
-            delete dealPayload.assigned_by_name;
-            delete dealPayload.assigned_by_role;
-            const retry = await db.from('deals').update(dealPayload).eq('id', editId);
-            if (retry.error) return alert("❌ خطأ أثناء تحديث الديل: " + retry.error.message);
-        }
-    } else {
-        const { error } = await db.from('deals').insert([dealPayload]);
-        if (error) {
-            delete dealPayload.assigned_by_name;
-            delete dealPayload.assigned_by_role;
-            const retry = await db.from('deals').insert([dealPayload]);
-            if (retry.error) return alert("❌ خطأ أثناء حفظ الديل: " + retry.error.message);
-        }
+    const writeDeal = payload => editId
+        ? db.from('deals').update(payload).eq('id', editId)
+        : db.from('deals').insert([payload]);
+
+    let { error } = await writeDeal(dealPayload);
+    // لو أعمدة المتابعة لسه ما اتضافتش في الداتابيز، الديل يتحفظ من غيرها بدل ما يقف
+    let followupSkipped = false;
+    if (error && /followup/.test(error.message)) {
+        delete dealPayload.followup_message;
+        delete dealPayload.followup_interval_days;
+        followupSkipped = true;
+        ({ error } = await writeDeal(dealPayload));
     }
+    if (error) {
+        delete dealPayload.assigned_by_name;
+        delete dealPayload.assigned_by_role;
+        ({ error } = await writeDeal(dealPayload));
+        if (error) return alert((editId ? "❌ خطأ أثناء تحديث الديل: " : "❌ خطأ أثناء حفظ الديل: ") + error.message);
+    }
+    if (followupSkipped) showToast("⚠️ الديل اتحفظ، بس رسالة المتابعة ما اتحفظتش لأن الداتابيز لسه محتاجة تتحدث.", "info");
 
     showToast("✅ تم حفظ وتحديث بيانات الديل بنجاح!", "success");
     dealImages = [];
@@ -497,6 +555,7 @@ function renderDeals(query = '') {
                 <div class="font-semibold text-blue-700">${d.meeting_time ? new Date(d.meeting_time).toLocaleString('ar-EG') : 'غير محدد'}</div>
                 <div class="text-[10px] text-slate-500 mt-0.5 font-bold">📲 خط الإرسال: ${waInst ? `${esc(waInst.instance_name)} (${esc(waInst.phone_number)})` : 'توزيع تلقائي'}</div>
                 ${esc(d.reminder_message) ? `<div class="mt-1 text-[10px] bg-emerald-50 text-emerald-900 p-1.5 rounded border border-emerald-200 max-w-[180px] truncate" title="${esc(d.reminder_message)}">💬 ${esc(d.reminder_message)}</div>` : ''}
+                ${d.followup_message && d.status === 'in_progress' ? `<div class="mt-1 text-[10px] bg-sky-50 text-sky-900 p-1.5 rounded border border-sky-200 max-w-[180px] truncate" title="${esc(d.followup_message)}">🔁 متابعة كل ${Number(d.followup_interval_days) || 15} يوم</div>` : ''}
             </td>
             <td class="p-3.5">${imageHtml}</td>
             <td class="p-3.5">

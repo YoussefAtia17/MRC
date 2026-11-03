@@ -659,6 +659,27 @@
                     </div>
                 </div>
 
+                <div class="bg-sky-50/70 p-3.5 rounded-xl border border-sky-200 space-y-2">
+                    <div class="flex justify-between items-center gap-2">
+                        <label class="block font-bold text-sky-900">🔁 رسالة المتابعة للعميل (بتتبعت لو الديل لسه مخلصش)</label>
+                        <button type="button" onclick="fillDefaultFollowupText()" class="text-[11px] bg-sky-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0">توليد نص تلقائي</button>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold text-sky-900">
+                        <span>تتبعت كل</span>
+                        <input type="number" id="followupIntervalDays" value="15" min="1" max="365" oninput="updateFollowupPreview()" class="w-20 border border-sky-300 rounded-lg p-1.5 text-center bg-white font-bold">
+                        <span>يوم طول ما الديل (قيد التواصل)</span>
+                    </div>
+                    <textarea id="followupMessage" rows="6" oninput="onFollowupTyped()" placeholder="اكتب رسالة المتابعة اللي هتتبعت للعميل..." class="w-full border border-sky-300 rounded-lg p-2 bg-white"></textarea>
+                    <div id="followupModeHint" class="text-[11px] font-bold text-sky-700"></div>
+                    <div class="wa-preview-bg p-3 rounded-xl border border-slate-300">
+                        <div class="text-[10px] text-slate-500 font-bold mb-1">📱 معاينة رسالة المتابعة على واتساب العميل (Preview):</div>
+                        <div class="bg-[#dcf8c6] text-slate-900 p-2.5 rounded-xl rounded-tr-none shadow-sm max-w-md text-xs leading-relaxed whitespace-pre-line relative">
+                            <span id="followupPreviewText"></span>
+                            <div class="text-[9px] text-slate-500 text-left mt-1 font-semibold">12:00 م ✓✓</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block font-semibold mb-1">صور الساعة / الحاجة اللي عليها الديل (تقدر تختار كذا صورة) <span id="imageCountLabel" class="text-blue-700"></span></label>
                     <input type="file" accept="image/*" multiple onchange="compressAndPreviewImage(event)" class="w-full text-xs">

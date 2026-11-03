@@ -36,6 +36,8 @@ function buildDealRows(deals) {
             'المعاد': toDate(d.meeting_time),
             'خط الواتساب': waInst ? `${waInst.instance_name} (${waInst.phone_number})` : '',
             'رسالة التذكير': d.reminder_message || '',
+            'رسالة المتابعة': d.followup_message || '',
+            'المتابعة كل (يوم)': d.followup_message ? Number(d.followup_interval_days || 15) : '',
             'تاريخ التسجيل': toDate(d.created_at)
         };
     });
